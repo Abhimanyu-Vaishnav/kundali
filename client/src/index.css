@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Mode (Ethereal Day) */
+    --background: 255 250 245;
+    /* Warm White */
+    --surface: 255 255 255;
+    --primary: 245 158 11;
+    /* Amber 500 */
+    --primary-hover: 217 119 6;
+    --secondary: 99 102 241;
+    /* Indigo 500 */
+    --accent: 217 70 239;
+    /* Fuchsia 500 */
+    --glass: 255 255 255;
+    --glass-border: 0 0 0;
+    --text-main: 15 23 42;
+    /* Slate 900 */
+    --text-muted: 100 116 139;
+    /* Slate 500 */
+    --bg-gradient: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 0% 50%, rgba(217, 70, 239, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 100% 50%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
+  }
+
+  .dark {
+    /* Dark Mode (Cosmic Glass) */
+    --background: 2 6 23;
+    /* Slate 950 */
+    --surface: 15 23 42;
+    /* Slate 900 */
+    --primary: 245 158 11;
+    --primary-hover: 217 119 6;
+    --secondary: 99 102 241;
+    --accent: 217 70 239;
+    --glass: 15 23 42;
+    --glass-border: 255 255 255;
+    --text-main: 241 245 249;
+    /* Slate 100 */
+    --text-muted: 148 163 184;
+    /* Slate 400 */
+    --bg-gradient: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 0% 50%, rgba(217, 70, 239, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 100% 50%, rgba(245, 158, 11, 0.1) 0%, transparent 50%);
+  }
+}
+
+body {
+  @apply bg-background text-textMain font-sans antialiased overflow-x-hidden transition-colors duration-300;
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color-scheme: light dark;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-glass/60 backdrop-blur-md border border-glassBorder/10 rounded-2xl shadow-xl transition-all duration-300;
+  }
+
+  .glass-input {
+    @apply w-full px-4 py-3 bg-surface/50 border border-textMuted/20 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 text-textMain placeholder-textMuted transition-all;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-primary to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-surface/50 border border-textMuted/20 text-textMain font-semibold rounded-xl hover:bg-surface hover:border-textMuted/40 transition-all duration-200;
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 text-textMuted hover:text-textMain hover:bg-textMain/5 rounded-lg transition-colors;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-textMuted/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-textMuted/50;
+}
