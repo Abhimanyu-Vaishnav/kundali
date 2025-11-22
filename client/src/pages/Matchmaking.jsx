@@ -25,8 +25,22 @@ const Matchmaking = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const { data } = await axios.post('/match', formData);
-            setMatchResult(data);
+            const payload = {
+                personA: {
+                    name: formData.boyName,
+                    dob: formData.boyDob,
+                    tob: formData.boyTob,
+                    place: formData.boyPlace
+                },
+                personB: {
+                    name: formData.girlName,
+                    dob: formData.girlDob,
+                    tob: formData.girlTob,
+                    place: formData.girlPlace
+                }
+            };
+            const { data } = await axios.post('/match', payload);
+            setMatchResult(data.match);
         } catch (error) {
             console.error('Error calculating match', error);
         } finally {
@@ -190,7 +204,7 @@ const Matchmaking = () => {
                                             strokeDasharray={552}
                                             strokeDashoffset={552 - (552 * matchResult.score) / 36}
                                             className={`transition-all duration-1000 ease-out ${matchResult.score > 25 ? 'text-green-500' :
-                                                    matchResult.score > 18 ? 'text-yellow-500' : 'text-red-500'
+                                                matchResult.score > 18 ? 'text-yellow-500' : 'text-red-500'
                                                 }`}
                                         />
                                     </svg>
@@ -203,7 +217,7 @@ const Matchmaking = () => {
 
                             <div className="mb-8">
                                 <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-4 ${matchResult.score > 25 ? 'bg-green-500/20 text-green-400' :
-                                        matchResult.score > 18 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'
+                                    matchResult.score > 18 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'
                                     }`}>
                                     {matchResult.score > 25 ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
                                     {matchResult.status} Compatibility
