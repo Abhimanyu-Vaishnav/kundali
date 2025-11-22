@@ -26,7 +26,7 @@ const History = () => {
         if (window.confirm('Are you sure you want to delete this Kundali?')) {
             try {
                 await axios.delete(`/kundali/${id}`);
-                setKundalis(kundalis.filter(k => k._id !== id));
+                setKundalis(kundalis.filter(k => k.id !== id));
             } catch (error) {
                 console.error('Error deleting kundali', error);
             }
@@ -72,7 +72,7 @@ const History = () => {
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                 >
                     {kundalis.map((kundali) => (
-                        <motion.div variants={item} key={kundali._id} className="glass-card group hover:bg-surface/80 transition-colors border border-glassBorder/10">
+                        <motion.div variants={item} key={kundali.id} className="glass-card group hover:bg-surface/80 transition-colors border border-glassBorder/10">
                             <div className="p-6">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
@@ -105,11 +105,14 @@ const History = () => {
                                 </div>
 
                                 <div className="flex gap-3 pt-4 border-t border-glassBorder/10">
-                                    <button className="btn-secondary flex-1 py-2 text-sm flex justify-center items-center gap-2 hover:bg-primary hover:border-primary hover:text-white group-hover:border-textMuted/20">
+                                    <button
+                                        onClick={() => window.location.href = `/kundali/${kundali.id}`}
+                                        className="btn-secondary flex-1 py-2 text-sm flex justify-center items-center gap-2 hover:bg-primary hover:border-primary hover:text-white group-hover:border-textMuted/20"
+                                    >
                                         <Eye size={16} /> View
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(kundali._id)}
+                                        onClick={() => handleDelete(kundali.id)}
                                         className="p-2 rounded-xl border border-glassBorder/10 text-textMuted hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/50 transition-colors"
                                     >
                                         <Trash2 size={18} />

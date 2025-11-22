@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { Calendar, Clock, MapPin, Download, Save, AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
+import { Calendar, Clock, MapPin, Download, Save, AlertCircle, CheckCircle, Sparkles, Printer } from 'lucide-react';
 import { motion } from 'framer-motion';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import KundaliChart from '../components/KundaliChart';
 
 const KundaliForm = () => {
     const [formData, setFormData] = useState({
@@ -17,9 +21,41 @@ const KundaliForm = () => {
     const [kundaliData, setKundaliData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const printRef = useRef();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const { id } = useParams();
+
+    useEffect(() => {
+        if (id) {
+            fetchKundali(id);
+        }
+    }, [id]);
+
+    const fetchKundali = async (kundaliId) => {
+        setLoading(true);
+        try {
+            const { data } = await axios.get(`/kundali/${kundaliId}`);
+            setKundaliData(data);
+            // Pre-fill form data as well
+            setFormData({
+                name: data.name,
+                gender: data.gender,
+                dob: data.dob.split('T')[0],
+                tob: data.tob,
+                place: data.place,
+                lat: data.lat,
+                lon: data.lon,
+                timezone: data.timezone
+            });
+        } catch (err) {
+            setError('Failed to load Kundali details');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -34,6 +70,32 @@ const KundaliForm = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDownloadPDF = async () => {
+        const element = printRef.current;
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            logging: false
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        const imgX = (pdfWidth - imgWidth * ratio) / 2;
+        const imgY = 10;
+
+        pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+        pdf.save(`${kundaliData.name}_Kundali.pdf`);
+    };
+
+    const handlePrint = () => {
+        window.print();
     };
 
     return (
@@ -85,8 +147,8 @@ const KundaliForm = () => {
                                             type="button"
                                             onClick={() => setFormData({ ...formData, gender: g })}
                                             className={`py-2 rounded-lg text-sm font-medium capitalize transition-all ${formData.gender === g
-                                                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                                    : 'bg-surface/50 text-textMuted hover:bg-surface border border-glassBorder/10'
+                                                ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                                : 'bg-surface/50 text-textMuted hover:bg-surface border border-glassBorder/10'
                                                 }`}
                                         >
                                             {g}
@@ -171,18 +233,120 @@ const KundaliForm = () => {
                                         </div>
                                     </div>
                                     <div className="flex gap-3">
-                                        <button className="btn-secondary py-2 px-4 text-sm flex items-center gap-2">
+                                        <button
+                                            onClick={handleDownloadPDF}
+                                            className="btn-secondary py-2 px-4 text-sm flex items-center gap-2"
+                                        >
                                             <Download size={16} /> PDF
                                         </button>
-                                        <button className="btn-primary py-2 px-4 text-sm flex items-center gap-2 bg-green-600 hover:bg-green-700 shadow-green-500/20">
-                                            <Save size={16} /> Saved
+                                        <button
+                                            onClick={handlePrint}
+                                            className="btn-secondary py-2 px-4 text-sm flex items-center gap-2"
+                                        >
+                                            <Printer size={16} /> Print
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Main Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Printable Section */}
+                            <div ref={printRef} className="bg-white p-8 print:p-0">
+                                {/* Print Header */}
+                                <div className="text-center mb-6 print:mb-4">
+                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{kundaliData.name}</h1>
+                                    <div className="text-gray-600 text-sm">
+                                        <span>DOB: {new Date(kundaliData.dob).toLocaleDateString()}</span>
+                                        <span className="mx-2">•</span>
+                                        <span>Time: {kundaliData.tob}</span>
+                                        <span className="mx-2">•</span>
+                                        <span>Place: {kundaliData.place}</span>
+                                    </div>
+                                </div>
+
+                                {/* Kundali Chart */}
+                                <div className="mb-8">
+                                    <h2 className="text-xl font-semibold text-gray-900 mb-4 text-center">Birth Chart (Janam Kundali)</h2>
+                                    <KundaliChart kundaliData={kundaliData} />
+                                </div>
+
+                                {/* Key Details Grid */}
+                                <div className="grid grid-cols-3 gap-4 mb-6">
+                                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                                        <div className="text-xs text-gray-500 uppercase mb-1">Lagna</div>
+                                        <div className="text-lg font-bold text-gray-900">{kundaliData.lagna.sign}</div>
+                                        <div className="text-xs text-gray-600">{kundaliData.lagna.degree.toFixed(2)}°</div>
+                                    </div>
+                                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                                        <div className="text-xs text-gray-500 uppercase mb-1">Rashi</div>
+                                        <div className="text-lg font-bold text-gray-900">{kundaliData.rashi}</div>
+                                        <div className="text-xs text-gray-600">Moon Sign</div>
+                                    </div>
+                                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                                        <div className="text-xs text-gray-500 uppercase mb-1">Nakshatra</div>
+                                        <div className="text-lg font-bold text-gray-900">{kundaliData.nakshatra}</div>
+                                        <div className="text-xs text-gray-600">Birth Star</div>
+                                    </div>
+                                </div>
+
+                                {/* Planetary Positions Table */}
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Planetary Positions</h3>
+                                    <table className="w-full border-collapse border border-gray-300">
+                                        <thead>
+                                            <tr className="bg-gray-100">
+                                                <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">Planet</th>
+                                                <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">Sign</th>
+                                                <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">Degree</th>
+                                                <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">House</th>
+                                                <th className="border border-gray-300 px-4 py-2 text-left text-gray-900">Nakshatra</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {kundaliData.planets.map((planet) => (
+                                                <tr key={planet.name} className="hover:bg-gray-50">
+                                                    <td className="border border-gray-300 px-4 py-2 text-gray-900 font-medium">
+                                                        {planet.name} {planet.isRetrograde && <span className="text-red-600 text-xs">(R)</span>}
+                                                    </td>
+                                                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{planet.sign}</td>
+                                                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{planet.degree.toFixed(2)}°</td>
+                                                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{planet.house}</td>
+                                                    <td className="border border-gray-300 px-4 py-2 text-gray-700">{planet.nakshatra}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Dosha Analysis */}
+                                {kundaliData.dosha && (
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Dosha Analysis</h3>
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className={`p-4 rounded-lg border-2 ${kundaliData.dosha.manglik ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}>
+                                                <div className="font-semibold text-gray-900">Manglik Dosha</div>
+                                                <div className="text-sm text-gray-700">{kundaliData.dosha.manglik ? 'Present' : 'Absent'}</div>
+                                            </div>
+                                            <div className={`p-4 rounded-lg border-2 ${kundaliData.dosha.kaalSarp ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}>
+                                                <div className="font-semibold text-gray-900">Kaal Sarp Dosha</div>
+                                                <div className="text-sm text-gray-700">{kundaliData.dosha.kaalSarp ? 'Present' : 'Absent'}</div>
+                                            </div>
+                                        </div>
+                                        {kundaliData.dosha.remedies.length > 0 && (
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-gray-700 uppercase mb-2">Suggested Remedies</h4>
+                                                <ul className="list-disc list-inside space-y-1">
+                                                    {kundaliData.dosha.remedies.map((remedy, idx) => (
+                                                        <li key={idx} className="text-sm text-gray-700">{remedy}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Main Grid (Screen Only) */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:hidden">
                                 {/* Key Indicators */}
                                 <div className="glass-card p-6 flex flex-col items-center justify-center text-center">
                                     <span className="text-xs uppercase tracking-wider text-textMuted mb-2">Lagna (Ascendant)</span>

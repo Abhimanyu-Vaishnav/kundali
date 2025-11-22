@@ -122,11 +122,19 @@ exports.getMyKundalis = async (req, res) => {
 // @access  Private
 exports.getKundaliById = async (req, res) => {
     try {
+        console.log('Fetching Kundali ID:', req.params.id);
         const kundali = await Kundali.findByPk(req.params.id);
+
+        if (kundali) {
+            console.log('Kundali Found:', kundali.id);
+            console.log('Kundali UserID:', kundali.userId, typeof kundali.userId);
+            console.log('Request UserID:', req.user.id, typeof req.user.id);
+        }
 
         if (kundali && kundali.userId === req.user.id) {
             res.json(kundali);
         } else {
+            console.log('Kundali not found or unauthorized');
             res.status(404).json({ message: 'Kundali not found' });
         }
     } catch (error) {

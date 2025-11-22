@@ -33,6 +33,11 @@ function App() {
                                         <KundaliForm />
                                     </ProtectedRoute>
                                 } />
+                                <Route path="/kundali/:id" element={
+                                    <ProtectedRoute>
+                                        <KundaliForm />
+                                    </ProtectedRoute>
+                                } />
                                 <Route path="/matchmaking" element={
                                     <ProtectedRoute>
                                         <Matchmaking />
