@@ -31,6 +31,7 @@ const Navbar = () => {
             { name: 'Kundali', path: '/kundali' },
             { name: 'Matchmaking', path: '/matchmaking' },
             { name: 'History', path: '/history' },
+            { name: 'Settings', path: '/settings' },
         ] : [])
     ];
 
@@ -55,8 +56,8 @@ const Navbar = () => {
                                 key={link.path}
                                 to={link.path}
                                 className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === link.path
-                                        ? 'text-textMain'
-                                        : 'text-textMuted hover:text-textMain hover:bg-textMain/5'
+                                    ? 'text-textMain'
+                                    : 'text-textMuted hover:text-textMain hover:bg-textMain/5'
                                     }`}
                             >
                                 {link.name}
@@ -131,8 +132,8 @@ const Navbar = () => {
                                     to={link.path}
                                     onClick={() => setIsOpen(false)}
                                     className={`block py-3 px-4 rounded-xl text-base font-medium ${location.pathname === link.path
-                                            ? 'bg-primary/10 text-primary'
-                                            : 'text-textMuted hover:bg-textMain/5 hover:text-textMain'
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'text-textMuted hover:bg-textMain/5 hover:text-textMain'
                                         }`}
                                 >
                                     {link.name}

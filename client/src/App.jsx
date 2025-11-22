@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import KundaliForm from './pages/KundaliForm';
 import Matchmaking from './pages/Matchmaking';
 import History from './pages/History';
+import Settings from './pages/Settings';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
@@ -46,6 +47,11 @@ function App() {
                                 <Route path="/history" element={
                                     <ProtectedRoute>
                                         <History />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/settings" element={
+                                    <ProtectedRoute>
+                                        <Settings />
                                     </ProtectedRoute>
                                 } />
                             </Routes>

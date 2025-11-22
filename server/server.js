@@ -21,10 +21,12 @@ app.use(cors({
 const authRoutes = require('./routes/authRoutes');
 const kundaliRoutes = require('./routes/kundaliRoutes');
 const matchRoutes = require('./routes/matchRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/kundali', kundaliRoutes);
 app.use('/api/match', matchRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
