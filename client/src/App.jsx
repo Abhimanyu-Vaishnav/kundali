@@ -7,6 +7,7 @@ import KundaliForm from './pages/KundaliForm';
 import Matchmaking from './pages/Matchmaking';
 import History from './pages/History';
 import Settings from './pages/Settings';
+import AIAstrologer from './pages/AIAstrologer';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
@@ -37,6 +38,11 @@ function App() {
                                 <Route path="/kundali/:id" element={
                                     <ProtectedRoute>
                                         <KundaliForm />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/ai-astrologer" element={
+                                    <ProtectedRoute>
+                                        <AIAstrologer />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/matchmaking" element={

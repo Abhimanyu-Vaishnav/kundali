@@ -29,6 +29,7 @@ const Navbar = () => {
         ...(user ? [
             { name: 'Dashboard', path: '/dashboard' },
             { name: 'Kundali', path: '/kundali' },
+            { name: 'AI Astrologer', path: '/ai-astrologer' },
             { name: 'Matchmaking', path: '/matchmaking' },
             { name: 'History', path: '/history' },
             { name: 'Settings', path: '/settings' },

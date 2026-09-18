@@ -515,7 +515,13 @@ const KundaliForm = () => {
                                         {new Date(kundaliData.dob).toLocaleDateString(isHi ? 'hi-IN' : 'en-US')} • {kundaliData.tob} • {kundaliData.place}
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
+                                    <Link
+                                        to={`/ai-astrologer${kundaliData.id ? `?kundaliId=${kundaliData.id}` : ''}`}
+                                        className="py-2 px-3.5 text-xs flex items-center gap-1.5 font-bold bg-gradient-to-r from-purple-600 to-primary text-white rounded-xl shadow-md hover:scale-105 transition-all"
+                                    >
+                                        <Sparkles size={15} /> Ask AI Astrologer
+                                    </Link>
                                     <button
                                         type="button"
                                         onClick={handleDownloadPDF}

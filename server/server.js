@@ -22,11 +22,13 @@ const authRoutes = require('./routes/authRoutes');
 const kundaliRoutes = require('./routes/kundaliRoutes');
 const matchRoutes = require('./routes/matchRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/kundali', kundaliRoutes);
 app.use('/api/match', matchRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
