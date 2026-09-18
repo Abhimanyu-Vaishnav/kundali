@@ -79,7 +79,7 @@ const KundaliForm = () => {
             const savedLang = localStorage.getItem('kundali_lang') || 'hi';
             setLang(savedLang);
 
-            const { data } = await axios.get('/api/settings', { withCredentials: true });
+            const { data } = await axios.get('/settings');
             if (data) {
                 const merged = {
                     ...data,
@@ -127,7 +127,7 @@ const KundaliForm = () => {
     const fetchKundali = async (kundaliId) => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`/api/kundali/${kundaliId}`, { withCredentials: true });
+            const { data } = await axios.get(`/kundali/${kundaliId}`);
             setKundaliData(data);
             setFormData({
                 name: data.name,
@@ -183,10 +183,11 @@ const KundaliForm = () => {
         setLoading(true);
         setError('');
         try {
-            const { data } = await axios.post('/api/kundali', formData, { withCredentials: true });
+            const { data } = await axios.post('/kundali', formData);
             setKundaliData(data);
             setShowEditForm(false);
         } catch (err) {
+            console.error('Kundali generation error:', err);
             setError(err.response?.data?.message || (lang === 'hi' ? 'कुण्डली बनाने में त्रुटि हुई' : 'Failed to generate Kundali'));
         } finally {
             setLoading(false);

@@ -39,7 +39,7 @@ const Matchmaking = () => {
                     place: formData.girlPlace
                 }
             };
-            const { data } = await axios.post('/api/match', payload, { withCredentials: true });
+            const { data } = await axios.post('/match', payload);
             setMatchResult({
                 ...data.match,
                 score: data.match.total_score,

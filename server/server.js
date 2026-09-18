@@ -17,6 +17,14 @@ app.use(cors({
     credentials: true
 }));
 
+// Defensive: Normalize any accidental double /api/api prefix
+app.use((req, res, next) => {
+    if (req.url.startsWith('/api/api/')) {
+        req.url = req.url.replace('/api/api/', '/api/');
+    }
+    next();
+});
+
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const kundaliRoutes = require('./routes/kundaliRoutes');

@@ -43,7 +43,7 @@ const AIAstrologer = () => {
     useEffect(() => {
         const fetchKundalis = async () => {
             try {
-                const res = await axios.get('/api/kundali', { withCredentials: true });
+                const res = await axios.get('/kundali');
                 const list = res.data.kundalis || [];
                 setKundalis(list);
 
@@ -69,7 +69,7 @@ const AIAstrologer = () => {
     useEffect(() => {
         const fetchQuestions = async () => {
             try {
-                const res = await axios.get('/api/ai/suggested-questions');
+                const res = await axios.get('/ai/suggested-questions');
                 setSuggestedQuestions(res.data.questions || []);
             } catch (err) {
                 console.error('Error fetching questions:', err);
@@ -124,11 +124,11 @@ const AIAstrologer = () => {
         setLoading(true);
 
         try {
-            const res = await axios.post('/api/ai/chat', {
+            const res = await axios.post('/ai/chat', {
                 kundaliId: selectedKundaliId || undefined,
                 kundaliData: selectedKundali || undefined,
                 question: q
-            }, { withCredentials: true });
+            });
 
             const aiReply = res.data.reply || 'क्षमा करें, इस समय ग्रहों का संदेश प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।';
 
