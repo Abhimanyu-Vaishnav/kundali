@@ -20,7 +20,7 @@ function App() {
                 <Router>
                     <div className="min-h-screen flex flex-col bg-background text-textMain transition-colors duration-300 print:min-h-0 print:block print:bg-white">
                         <Navbar />
-                        <main className="flex-grow container mx-auto px-4 py-8 print:p-0 print:m-0 print:max-w-none print:w-full print:block">
+                        <main className="flex-grow container mx-auto px-4 pt-24 md:pt-28 pb-12 print:p-0 print:m-0 print:max-w-none print:w-full print:block">
                             <Routes>
                                 <Route path="/" element={<Home />} />
                                 <Route path="/login" element={<Login />} />

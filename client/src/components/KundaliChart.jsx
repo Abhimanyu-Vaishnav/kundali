@@ -211,14 +211,14 @@ const KundaliChart = ({
             )}
 
             {/* Title above chart */}
-            <div className="text-center mb-1.5">
-                <h4 className="font-bold text-sm md:text-base text-red-900 tracking-wide">
+            <div className="text-center mb-2">
+                <h4 className="font-bold text-sm md:text-base text-primary tracking-wide">
                     {getChartTitle()}
                 </h4>
             </div>
 
             {/* Sacred Vedic North Indian Diamond Chart SVG */}
-            <div className={`relative w-full ${isCompact ? 'max-w-[280px]' : 'max-w-md md:max-w-[420px]'} aspect-square drop-shadow-md`}>
+            <div className={`relative w-full ${isCompact ? 'max-w-[260px]' : 'max-w-[360px]'} aspect-square mx-auto drop-shadow-md`}>
                 <svg
                     viewBox="0 0 400 400"
                     className="w-full h-full bg-[#FFFBF0] rounded-xl border-4 border-[#B91C1C] shadow-inner"
@@ -361,18 +361,18 @@ const KundaliChart = ({
             </div>
 
             {/* Pandit-style Traditional Abbreviations Legend */}
-            <div className="mt-3 p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-amber-950 w-full max-w-md">
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1 text-center font-medium text-[11px]">
-                    <div><span className="font-bold text-red-700">{lang === 'hi' ? 'सू' : 'Su'}</span>: {lang === 'hi' ? 'सूर्य' : 'Sun'}</div>
-                    <div><span className="font-bold text-sky-700">{lang === 'hi' ? 'चं' : 'Mo'}</span>: {lang === 'hi' ? 'चन्द्र' : 'Moon'}</div>
-                    <div><span className="font-bold text-rose-700">{lang === 'hi' ? 'मं' : 'Ma'}</span>: {lang === 'hi' ? 'मंगल' : 'Mars'}</div>
-                    <div><span className="font-bold text-emerald-700">{lang === 'hi' ? 'बु' : 'Me'}</span>: {lang === 'hi' ? 'बुध' : 'Mercury'}</div>
-                    <div><span className="font-bold text-yellow-700">{lang === 'hi' ? 'गु' : 'Ju'}</span>: {lang === 'hi' ? 'गुरु' : 'Jupiter'}</div>
-                    <div><span className="font-bold text-pink-700">{lang === 'hi' ? 'शु' : 'Ve'}</span>: {lang === 'hi' ? 'शुक्र' : 'Venus'}</div>
-                    <div><span className="font-bold text-indigo-700">{lang === 'hi' ? 'श' : 'Sa'}</span>: {lang === 'hi' ? 'शनि' : 'Saturn'}</div>
-                    <div><span className="font-bold text-purple-700">{lang === 'hi' ? 'रा' : 'Ra'}</span>: {lang === 'hi' ? 'राहु' : 'Rahu'}</div>
-                    <div><span className="font-bold text-purple-700">{lang === 'hi' ? 'के' : 'Ke'}</span>: {lang === 'hi' ? 'केतु' : 'Ketu'}</div>
-                    <div><span className="font-bold text-amber-800">{lang === 'hi' ? '(व)' : '(R)'}</span>: {lang === 'hi' ? 'वक्री' : 'Retro'}</div>
+            <div className="mt-3 p-3 bg-surface/60 border border-glassBorder/15 rounded-xl text-xs text-textMain w-full max-w-[360px] mx-auto shadow-xs">
+                <div className="grid grid-cols-5 gap-1.5 text-center font-medium text-[11px]">
+                    <div><span className="font-bold text-red-500">{lang === 'hi' ? 'सू' : 'Su'}</span>: {lang === 'hi' ? 'सूर्य' : 'Sun'}</div>
+                    <div><span className="font-bold text-sky-500">{lang === 'hi' ? 'चं' : 'Mo'}</span>: {lang === 'hi' ? 'चन्द्र' : 'Moon'}</div>
+                    <div><span className="font-bold text-rose-500">{lang === 'hi' ? 'मं' : 'Ma'}</span>: {lang === 'hi' ? 'मंगल' : 'Mars'}</div>
+                    <div><span className="font-bold text-emerald-500">{lang === 'hi' ? 'बु' : 'Me'}</span>: {lang === 'hi' ? 'बुध' : 'Mercury'}</div>
+                    <div><span className="font-bold text-yellow-500">{lang === 'hi' ? 'गु' : 'Ju'}</span>: {lang === 'hi' ? 'गुरु' : 'Jupiter'}</div>
+                    <div><span className="font-bold text-pink-500">{lang === 'hi' ? 'शु' : 'Ve'}</span>: {lang === 'hi' ? 'शुक्र' : 'Venus'}</div>
+                    <div><span className="font-bold text-indigo-500">{lang === 'hi' ? 'श' : 'Sa'}</span>: {lang === 'hi' ? 'शनि' : 'Saturn'}</div>
+                    <div><span className="font-bold text-purple-500">{lang === 'hi' ? 'रा' : 'Ra'}</span>: {lang === 'hi' ? 'राहु' : 'Rahu'}</div>
+                    <div><span className="font-bold text-purple-500">{lang === 'hi' ? 'के' : 'Ke'}</span>: {lang === 'hi' ? 'केतु' : 'Ketu'}</div>
+                    <div><span className="font-bold text-amber-500">{lang === 'hi' ? '(व)' : '(R)'}</span>: {lang === 'hi' ? 'वक्री' : 'Retro'}</div>
                 </div>
             </div>
         </div>

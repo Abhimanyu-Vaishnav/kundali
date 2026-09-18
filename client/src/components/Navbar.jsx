@@ -25,7 +25,6 @@ const Navbar = () => {
     };
 
     const navLinks = [
-        { name: 'Home', path: '/' },
         ...(user ? [
             { name: 'Dashboard', path: '/dashboard' },
             { name: 'Kundali', path: '/kundali' },
@@ -33,74 +32,80 @@ const Navbar = () => {
             { name: 'Matchmaking', path: '/matchmaking' },
             { name: 'History', path: '/history' },
             { name: 'Settings', path: '/settings' },
-        ] : [])
+        ] : [
+            { name: 'Home', path: '/' },
+        ])
     ];
 
     return (
-        <nav className={`print:hidden fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-background/80 backdrop-blur-lg border-b border-glassBorder/10 py-3' : 'bg-transparent py-5'
-            }`}>
-            <div className="container mx-auto px-6">
+        <nav className={`print:hidden fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+            scrolled 
+                ? 'bg-background/90 backdrop-blur-xl border-b border-glassBorder/10 py-2.5 shadow-sm' 
+                : 'bg-background/60 backdrop-blur-lg border-b border-glassBorder/5 py-3.5'
+        }`}>
+            <div className="container mx-auto px-4 md:px-6">
                 <div className="flex justify-between items-center">
-                    <Link to="/" className="flex items-center gap-2 group">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
-                            <Sparkles className="text-white" size={20} />
+                    <Link to="/" className="flex items-center gap-2.5 group">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-orange-500 flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+                            <Sparkles className="text-white" size={18} />
                         </div>
-                        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-textMain to-textMuted">
+                        <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-textMain to-primary">
                             Astrolite
                         </span>
                     </Link>
 
                     {/* Desktop Menu */}
-                    <div className="hidden md:flex items-center gap-1">
+                    <div className="hidden lg:flex items-center gap-1">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.path}
                                 to={link.path}
-                                className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === link.path
-                                    ? 'text-textMain'
-                                    : 'text-textMuted hover:text-textMain hover:bg-textMain/5'
-                                    }`}
+                                className={`relative px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                    location.pathname === link.path
+                                        ? 'text-primary font-semibold'
+                                        : 'text-textMuted hover:text-textMain hover:bg-surface/60'
+                                }`}
                             >
                                 {link.name}
                                 {location.pathname === link.path && (
                                     <motion.div
                                         layoutId="navbar-indicator"
-                                        className="absolute inset-0 bg-textMain/5 rounded-lg -z-10"
+                                        className="absolute inset-0 bg-primary/10 rounded-lg -z-10 border border-primary/20"
                                         transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                     />
                                 )}
                             </Link>
                         ))}
 
-                        <div className="w-px h-6 bg-textMuted/20 mx-4" />
+                        <div className="w-px h-5 bg-glassBorder/15 mx-3" />
 
                         <button
                             onClick={toggleTheme}
-                            className="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-textMain/5 transition-colors mr-2"
+                            className="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-surface/60 transition-colors"
                             aria-label="Toggle Theme"
                         >
-                            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
 
                         {user ? (
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm text-textMuted">
-                                    Hi, <span className="text-primary font-semibold">{user.name}</span>
+                            <div className="flex items-center gap-3 ml-2">
+                                <span className="text-xs text-textMuted hidden xl:inline">
+                                    <span className="text-textMain font-semibold">{user.name}</span>
                                 </span>
-                                <button onClick={handleLogout} className="btn-secondary py-2 px-4 text-sm">
+                                <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg border border-glassBorder/20 text-xs font-medium text-textMuted hover:text-textMain hover:bg-surface/80 transition-all">
                                     Logout
                                 </button>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-3">
-                                <Link to="/login" className="btn-ghost">Login</Link>
-                                <Link to="/signup" className="btn-primary py-2 px-5 text-sm">Sign Up</Link>
+                            <div className="flex items-center gap-2 ml-2">
+                                <Link to="/login" className="btn-ghost py-1.5 px-3 text-sm">Login</Link>
+                                <Link to="/signup" className="btn-primary py-1.5 px-4 text-sm">Sign Up</Link>
                             </div>
                         )}
                     </div>
 
-                    {/* Mobile Menu Button */}
-                    <div className="md:hidden flex items-center gap-4">
+                    {/* Mobile / Tablet Menu Button */}
+                    <div className="lg:hidden flex items-center gap-2">
                         <button
                             onClick={toggleTheme}
                             className="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-textMain/5 transition-colors"

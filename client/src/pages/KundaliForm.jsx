@@ -19,7 +19,11 @@ import {
     Flame,
     Award,
     Layers,
-    BookOpen
+    BookOpen,
+    Edit3,
+    CheckCircle2,
+    AlertTriangle,
+    Eye
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -31,6 +35,7 @@ const KundaliForm = () => {
     // Language is controlled from Settings / localStorage
     const [lang, setLang] = useState(() => localStorage.getItem('kundali_lang') || 'hi');
     const t = TRANSLATIONS[lang] || TRANSLATIONS.hi;
+    const isHi = lang === 'hi';
 
     // User settings (watermark, border, astrologer details, pdfSections)
     const [userSettings, setUserSettings] = useState({
@@ -57,6 +62,8 @@ const KundaliForm = () => {
     const [citySearch, setCitySearch] = useState('New Delhi, India');
     const [citySuggestions, setCitySuggestions] = useState([]);
     const [showCoords, setShowCoords] = useState(false);
+    const [showEditForm, setShowEditForm] = useState(false);
+    const [activeTab, setActiveTab] = useState('chart'); // 'chart', 'panchang', 'dasha', 'doshas'
 
     const [kundaliData, setKundaliData] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -72,7 +79,7 @@ const KundaliForm = () => {
             const savedLang = localStorage.getItem('kundali_lang') || 'hi';
             setLang(savedLang);
 
-            const { data } = await axios.get('/settings');
+            const { data } = await axios.get('/api/settings', { withCredentials: true });
             if (data) {
                 const merged = {
                     ...data,
@@ -99,7 +106,6 @@ const KundaliForm = () => {
     useEffect(() => {
         loadSettings();
 
-        // Listen for live settings changes from Settings page
         const handleSettingsUpdated = () => {
             loadSettings();
         };
@@ -121,7 +127,7 @@ const KundaliForm = () => {
     const fetchKundali = async (kundaliId) => {
         setLoading(true);
         try {
-            const { data } = await axios.get(`/kundali/${kundaliId}`);
+            const { data } = await axios.get(`/api/kundali/${kundaliId}`, { withCredentials: true });
             setKundaliData(data);
             setFormData({
                 name: data.name,
@@ -177,8 +183,9 @@ const KundaliForm = () => {
         setLoading(true);
         setError('');
         try {
-            const { data } = await axios.post('/kundali', formData);
+            const { data } = await axios.post('/api/kundali', formData, { withCredentials: true });
             setKundaliData(data);
+            setShowEditForm(false);
         } catch (err) {
             setError(err.response?.data?.message || (lang === 'hi' ? 'कुण्डली बनाने में त्रुटि हुई' : 'Failed to generate Kundali'));
         } finally {
@@ -190,7 +197,7 @@ const KundaliForm = () => {
         window.print();
     };
 
-    // Multi-page PDF Download: Captures each distinct sheet without splitting text
+    // Multi-page PDF Download
     const handleDownloadPDF = async () => {
         if (!printRef.current) return;
         try {
@@ -230,7 +237,6 @@ const KundaliForm = () => {
         }
     };
 
-    // Border style class based on user settings
     const getBorderStyleClass = () => {
         const style = userSettings.borderStyle || 'traditional-gold';
         if (style === 'royal-maroon') {
@@ -239,7 +245,6 @@ const KundaliForm = () => {
         if (style === 'classic') {
             return 'border-2 border-[#991B1B]';
         }
-        // Default: traditional-gold
         return 'border-4 border-[#B91C1C] ring-4 ring-[#D97706]/40';
     };
 
@@ -247,306 +252,371 @@ const KundaliForm = () => {
     const watermarkEnabled = userSettings.watermark?.enabled !== false;
     const watermarkOpacity = userSettings.watermark?.opacity ?? 0.08;
 
-    // Localized watermark graphic component rendered inside each sheet
     const renderWatermarkForSheet = () => {
         if (!watermarkEnabled) return null;
-
         let symbol = 'ॐ';
         if (watermarkType === 'shree') symbol = 'श्री';
-        else if (watermarkType === 'swastik') symbol = '卐';
-        else if (watermarkType === 'ganesha') symbol = '卐';
+        else if (watermarkType === 'swastik' || watermarkType === 'ganesha') symbol = '卐';
         else if (watermarkType === 'mandala') symbol = '☸';
 
         return (
             <div
-                className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden"
+                className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0"
                 style={{ opacity: watermarkOpacity }}
-                aria-hidden="true"
             >
-                <div className="text-center font-bold text-[#B91C1C] leading-none transform -rotate-12 select-none">
-                    <div style={{ fontSize: '180px', lineHeight: 1 }}>
-                        {symbol}
-                    </div>
-                </div>
+                <span className="text-[260px] font-bold text-[#D97706] leading-none">
+                    {symbol}
+                </span>
             </div>
         );
     };
 
-    const isHi = lang === 'hi';
+    // Form JSX component for reuse
+    const renderFormComponent = () => (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
+                    {t.fullName} *
+                </label>
+                <input
+                    type="text"
+                    name="name"
+                    className="glass-input text-sm"
+                    placeholder={isHi ? 'पूरा नाम लिखें...' : 'Enter full name...'}
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                />
+            </div>
 
-    return (
-        <div className="max-w-7xl mx-auto pt-4 pb-16 px-3 sm:px-6 print:p-0 print:m-0 print:max-w-none print:w-full">
-            {/* Top Bar (Clean & Lightweight - Language switcher moved to Settings) */}
-            <div className="flex justify-between items-center mb-6 print:hidden">
-                <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-semibold text-amber-500 flex items-center gap-1.5 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
-                        <Sparkles size={15} />
-                        {isHi ? 'प्रामाणिक वैदिक ज्योतिष (NASA JPL & लहरी अयनांश)' : 'Authentic Vedic Astrology (NASA JPL & Lahiri Ephemeris)'}
-                    </span>
+            <div>
+                <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
+                    {t.gender}
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                    {['male', 'female', 'other'].map(g => (
+                        <button
+                            key={g}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, gender: g })}
+                            className={`py-2 rounded-xl text-xs font-semibold capitalize transition-all ${
+                                formData.gender === g
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'bg-surface border border-glassBorder/10 text-textMuted hover:text-textMain'
+                            }`}
+                        >
+                            {t[g] || g}
+                        </button>
+                    ))}
                 </div>
-                <Link
-                    to="/settings"
-                    className="flex items-center gap-1.5 text-xs text-textMuted hover:text-amber-500 bg-surface/70 px-3 py-1.5 rounded-xl border border-glassBorder/15 transition-all shadow-xs"
-                    title={isHi ? 'भाषा, वॉटरमार्क एवं बॉर्डर सेटिंग्स' : 'Language, Watermark & Border Settings'}
-                >
-                    <SettingsIcon size={14} className="text-amber-500" />
-                    <span>{isHi ? 'अनुकूलन सेटिंग्स' : 'Settings'}</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 ml-1">
-                        {isHi ? 'हिन्दी' : 'English'}
-                    </span>
-                </Link>
             </div>
 
-            {/* Page Header (Screen only) */}
-            <div className="text-center mb-8 print:hidden">
-                <div className="text-amber-500 font-bold tracking-widest text-xs mb-1">{t.omGanesh}</div>
-                <h1 className="text-3xl md:text-4xl font-extrabold text-textMain mb-2">
-                    {isHi ? 'प्रामाणिक वैदिक जन्म पत्रिका' : 'Vedic Kundali & Janam Patrika'}
-                </h1>
-                <p className="text-textMuted max-w-2xl mx-auto text-xs sm:text-sm">
-                    {isHi
-                        ? '100% सटीक खगोलीय गणना पर आधारित सम्पूर्ण जन्म पत्रिका, नवमांश, षोडशवर्ग, द्वादश भाव विश्लेषण, सर्वाष्टकवर्ग एवं विंशोत्तरी महादशा।'
-                        : '100% accurate birth chart powered by high-precision planetary ephemeris, Lahiri Ayanamsha, D1/D9/D10 charts, 12 Bhavaphala, SAV points, and Vimshottari Dasha.'}
-                </p>
-            </div>
+            <div className="relative">
+                <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
+                    {t.placeOfBirth} *
+                </label>
+                <div className="relative">
+                    <MapPin className="absolute left-3.5 top-3.5 text-primary" size={16} />
+                    <input
+                        type="text"
+                        className="glass-input pl-10 text-sm"
+                        value={citySearch}
+                        onChange={handleCityInputChange}
+                        placeholder={isHi ? 'शहर का नाम लिखें...' : 'Type city name...'}
+                        required
+                    />
+                </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 print:block print:w-full print:m-0 print:p-0">
-                {/* Form Section (Hidden in print) */}
-                <div className="lg:col-span-4 print:hidden">
-                    <div className="glass-card p-5 sm:p-6 sticky top-20 border border-amber-500/20 shadow-xl">
-                        <h2 className="text-base sm:text-lg font-bold mb-4 flex items-center gap-2 text-textMain border-b border-glassBorder/10 pb-3">
-                            <Sparkles className="text-amber-500" size={18} /> {t.birthDetails}
-                        </h2>
-
-                        {error && (
-                            <div className="bg-red-500/10 text-red-400 p-3 rounded-xl mb-4 text-xs border border-red-500/20 flex items-center gap-2">
-                                <ShieldAlert size={16} className="shrink-0" />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
-                                    {t.fullName} *
-                                </label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    className="glass-input text-sm"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    placeholder={isHi ? 'उदा. अमित शर्मा' : 'e.g. Amit Sharma'}
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
-                                    {t.gender}
-                                </label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {['male', 'female', 'other'].map((g) => (
-                                        <button
-                                            key={g}
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, gender: g })}
-                                            className={`py-2 rounded-lg text-xs font-semibold capitalize transition-all ${
-                                                formData.gender === g
-                                                    ? 'bg-amber-600 text-white shadow-md'
-                                                    : 'bg-surface/50 text-textMuted hover:bg-surface border border-glassBorder/10'
-                                            }`}
-                                        >
-                                            {t[g] || g}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* City / Place Input with Auto-complete */}
-                            <div className="relative">
-                                <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
-                                    {t.placeOfBirth} *
-                                </label>
-                                <div className="relative">
-                                    <MapPin className="absolute left-3.5 top-3.5 text-amber-500" size={16} />
-                                    <input
-                                        type="text"
-                                        className="glass-input pl-10 text-sm"
-                                        value={citySearch}
-                                        onChange={handleCityInputChange}
-                                        placeholder={isHi ? 'शहर का नाम लिखें...' : 'Type city name...'}
-                                        required
-                                    />
-                                </div>
-
-                                {citySuggestions.length > 0 && (
-                                    <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-glassBorder/30 rounded-xl shadow-2xl z-30 overflow-hidden">
-                                        {citySuggestions.map((city, idx) => (
-                                            <button
-                                                key={idx}
-                                                type="button"
-                                                onClick={() => handleSelectCity(city)}
-                                                className="w-full text-left px-4 py-2.5 text-xs hover:bg-amber-500/10 text-textMain flex items-center justify-between border-b border-glassBorder/10 last:border-0"
-                                            >
-                                                <span>{city.name}</span>
-                                                <span className="text-[10px] text-textMuted">
-                                                    {city.lat.toFixed(2)}°N, {city.lon.toFixed(2)}°E
-                                                </span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Advanced Coordinates Toggle */}
-                            <div>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCoords(!showCoords)}
-                                    className="text-[11px] text-amber-500 flex items-center gap-1 hover:underline font-medium"
-                                >
-                                    <Compass size={12} />
-                                    {isHi ? 'सटीक निर्देशांक (Lat/Lon/Timezone)' : 'Exact Coordinates & Timezone'}
-                                    {showCoords ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                                </button>
-
-                                {showCoords && (
-                                    <div className="mt-2.5 p-3 rounded-xl bg-surface/40 border border-glassBorder/10 grid grid-cols-3 gap-2 text-xs">
-                                        <div>
-                                            <label className="block text-[10px] text-textMuted uppercase mb-0.5">Lat</label>
-                                            <input
-                                                type="number"
-                                                step="any"
-                                                name="lat"
-                                                className="w-full bg-surface/60 p-1.5 rounded border border-glassBorder/20 text-textMain"
-                                                value={formData.lat}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] text-textMuted uppercase mb-0.5">Lon</label>
-                                            <input
-                                                type="number"
-                                                step="any"
-                                                name="lon"
-                                                className="w-full bg-surface/60 p-1.5 rounded border border-glassBorder/20 text-textMain"
-                                                value={formData.lon}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] text-textMuted uppercase mb-0.5">TZ</label>
-                                            <input
-                                                type="number"
-                                                step="any"
-                                                name="timezone"
-                                                className="w-full bg-surface/60 p-1.5 rounded border border-glassBorder/20 text-textMain"
-                                                value={formData.timezone}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Date and Time */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
-                                        {t.dateOfBirth} *
-                                    </label>
-                                    <div className="relative">
-                                        <Calendar className="absolute left-3 top-3.5 text-textMuted" size={15} />
-                                        <input
-                                            type="date"
-                                            name="dob"
-                                            className="glass-input pl-9 text-xs"
-                                            value={formData.dob}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
-                                        {t.timeOfBirth} *
-                                    </label>
-                                    <div className="relative">
-                                        <Clock className="absolute left-3 top-3.5 text-textMuted" size={15} />
-                                        <input
-                                            type="time"
-                                            name="tob"
-                                            className="glass-input pl-9 text-xs"
-                                            value={formData.tob}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
+                {citySuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-glassBorder/30 rounded-xl shadow-2xl z-30 overflow-hidden">
+                        {citySuggestions.map((city, idx) => (
                             <button
-                                type="submit"
-                                className="btn-primary w-full mt-5 py-3 text-sm flex items-center justify-center gap-2 font-bold tracking-wide uppercase bg-gradient-to-r from-red-600 via-amber-600 to-orange-500 hover:from-red-700 hover:to-orange-600 shadow-md"
-                                disabled={loading}
+                                key={idx}
+                                type="button"
+                                onClick={() => handleSelectCity(city)}
+                                className="w-full text-left px-4 py-2.5 text-xs hover:bg-primary/10 text-textMain flex items-center justify-between border-b border-glassBorder/10 last:border-0"
                             >
-                                <Sparkles size={16} />
-                                {loading ? t.calculating : t.generateChart}
+                                <span>{city.name}</span>
+                                <span className="text-[10px] text-textMuted">
+                                    {city.lat.toFixed(2)}°N, {city.lon.toFixed(2)}°E
+                                </span>
                             </button>
-                        </form>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <div>
+                <button
+                    type="button"
+                    onClick={() => setShowCoords(!showCoords)}
+                    className="text-xs text-primary flex items-center gap-1 hover:underline font-medium"
+                >
+                    <Compass size={13} />
+                    {isHi ? 'सटीक निर्देशांक (Lat/Lon/Timezone)' : 'Exact Coordinates & Timezone'}
+                    {showCoords ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                </button>
+
+                {showCoords && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-surface/50 border border-glassBorder/15 grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                            <label className="block text-[10px] text-textMuted uppercase mb-0.5">Lat</label>
+                            <input
+                                type="number"
+                                step="any"
+                                name="lat"
+                                className="w-full bg-surface p-1.5 rounded-lg border border-glassBorder/20 text-textMain text-xs"
+                                value={formData.lat}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] text-textMuted uppercase mb-0.5">Lon</label>
+                            <input
+                                type="number"
+                                step="any"
+                                name="lon"
+                                className="w-full bg-surface p-1.5 rounded-lg border border-glassBorder/20 text-textMain text-xs"
+                                value={formData.lon}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-[10px] text-textMuted uppercase mb-0.5">TZ</label>
+                            <input
+                                type="number"
+                                step="any"
+                                name="timezone"
+                                className="w-full bg-surface p-1.5 rounded-lg border border-glassBorder/20 text-textMain text-xs"
+                                value={formData.timezone}
+                                onChange={handleChange}
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
+                        {t.dateOfBirth} *
+                    </label>
+                    <div className="relative">
+                        <Calendar className="absolute left-3 top-3.5 text-textMuted" size={15} />
+                        <input
+                            type="date"
+                            name="dob"
+                            className="glass-input pl-9 text-xs"
+                            value={formData.dob}
+                            onChange={handleChange}
+                            required
+                        />
                     </div>
                 </div>
+                <div>
+                    <label className="block text-xs font-semibold text-textMuted mb-1 uppercase tracking-wider">
+                        {t.timeOfBirth} *
+                    </label>
+                    <div className="relative">
+                        <Clock className="absolute left-3 top-3.5 text-textMuted" size={15} />
+                        <input
+                            type="time"
+                            name="tob"
+                            className="glass-input pl-9 text-xs"
+                            value={formData.tob}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                </div>
+            </div>
 
-                {/* Result Section (Multi-Page Janam Patrika) */}
-                <div className="lg:col-span-8 print:w-full print:m-0 print:p-0">
-                    {kundaliData ? (
+            <button
+                type="submit"
+                className="btn-primary w-full mt-4 py-3 text-sm flex items-center justify-center gap-2 font-bold tracking-wide uppercase"
+                disabled={loading}
+            >
+                <Sparkles size={16} />
+                {loading ? t.calculating : t.generateChart}
+            </button>
+        </form>
+    );
+
+    return (
+        <div className="max-w-5xl mx-auto space-y-6">
+            {error && (
+                <div className="p-3.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-sm flex items-center justify-between">
+                    <span>{error}</span>
+                    <button onClick={() => setError('')} className="text-xs font-bold ml-2">×</button>
+                </div>
+            )}
+
+            {/* IF NO KUNDALI IS GENERATED YET: Centered Clean Form */}
+            {!kundaliData ? (
+                <div className="max-w-xl mx-auto space-y-6">
+                    <div className="text-center space-y-2">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
+                            <Sparkles size={13} />
+                            Vedic Kundali Generator
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-textMain tracking-tight">
+                            {t.janamPatrika}
+                        </h1>
+                        <p className="text-sm text-textMuted max-w-md mx-auto">
+                            Enter birth details below to calculate Lagna, Rashi, planetary degrees, and comprehensive predictions.
+                        </p>
+                    </div>
+
+                    <div className="glass-card p-6 md:p-8 rounded-2xl shadow-xl border border-glassBorder/10">
+                        {renderFormComponent()}
+                    </div>
+                </div>
+            ) : (
+                /* IF KUNDALI IS GENERATED: Sleek, Modular, Full-Width Interface */
+                <div className="space-y-6">
+                    {/* Top Action Bar */}
+                    <div className="glass-card p-5 rounded-2xl shadow-md border border-glassBorder/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <div className="flex items-center gap-2.5">
+                                <h2 className="text-xl md:text-2xl font-bold text-textMain">
+                                    {kundaliData.name}
+                                </h2>
+                                <span className="px-2.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25 text-xs font-bold">
+                                    {isHi ? kundaliData.rashiHi || kundaliData.rashi : kundaliData.rashi}
+                                </span>
+                            </div>
+                            <p className="text-xs text-textMuted mt-1 flex flex-wrap items-center gap-2">
+                                <span>{new Date(kundaliData.dob).toLocaleDateString(isHi ? 'hi-IN' : 'en-US')}</span>
+                                <span>•</span>
+                                <span>{kundaliData.tob}</span>
+                                <span>•</span>
+                                <span>{kundaliData.place}</span>
+                            </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Link
+                                to={`/ai-astrologer?kundaliId=${kundaliData.id || ''}`}
+                                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-primary text-white shadow-md shadow-primary/20 hover:scale-105 transition-all flex items-center gap-1.5"
+                            >
+                                <Sparkles size={14} />
+                                Ask AI Astrologer
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={handleDownloadPDF}
+                                className="btn-secondary py-2 px-3 text-xs font-semibold flex items-center gap-1.5"
+                            >
+                                <Download size={14} />
+                                {t.downloadPDF}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handlePrint}
+                                className="btn-secondary py-2 px-3 text-xs font-semibold flex items-center gap-1.5"
+                            >
+                                <Printer size={14} />
+                                {t.print}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShowEditForm(!showEditForm)}
+                                className="px-3 py-2 rounded-xl text-xs font-semibold border border-glassBorder/20 text-textMuted hover:text-textMain hover:bg-surface/80 flex items-center gap-1.5 transition-colors"
+                            >
+                                <Edit3 size={14} />
+                                {showEditForm ? (isHi ? 'फॉर्म छुपाएं' : 'Close Form') : (isHi ? 'बदलाव करें' : 'Edit')}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Collapsible Edit Form */}
+                    {showEditForm && (
+                        <div className="glass-card p-6 rounded-2xl border border-primary/20 shadow-xl max-w-xl mx-auto animate-fadeIn">
+                            <h3 className="text-sm font-bold text-textMain mb-3 flex items-center gap-2">
+                                <Edit3 size={15} className="text-primary" />
+                                {isHi ? 'जन्म विवरण में बदलाव करें' : 'Edit Birth Details'}
+                            </h3>
+                            {renderFormComponent()}
+                        </div>
+                    )}
+
+                    {/* Segmented Minimal Tabs */}
+                    <div className="flex overflow-x-auto scrollbar-none p-1.5 bg-surface/60 backdrop-blur-md rounded-2xl border border-glassBorder/10 gap-1.5 shadow-sm">
+                        {[
+                            { id: 'chart', label: isHi ? 'कुण्डली व ग्रह' : 'Chart & Planets', icon: Sparkles },
+                            { id: 'panchang', label: isHi ? 'पंचांग व अवकहड़ा' : 'Panchang & Details', icon: Sun },
+                            { id: 'dasha', label: isHi ? 'दशा व भाव फल' : 'Dasha & Houses', icon: Clock },
+                            { id: 'doshas', label: isHi ? 'दोष व उपाय' : 'Doshas & Remedies', icon: Flame },
+                        ].map(tab => {
+                            const IconComp = tab.icon;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                                        activeTab === tab.id
+                                            ? 'bg-primary text-white shadow-md shadow-primary/25'
+                                            : 'text-textMuted hover:text-textMain hover:bg-surface/60'
+                                    }`}
+                                >
+                                    <IconComp size={15} />
+                                    <span>{tab.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* TAB 1: Chart & Planets */}
+                    {activeTab === 'chart' && (
                         <div className="space-y-6">
-                            {/* Action Bar (Download & Print) */}
-                            <div className="glass-card p-4 md:p-5 flex flex-wrap justify-between items-center gap-4 border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-surface/80 to-surface/80 print:hidden">
-                                <div>
-                                    <h2 className="text-xl md:text-2xl font-bold text-textMain flex items-center gap-2">
-                                        <span>{kundaliData.name}</span>
-                                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500 font-semibold border border-amber-500/30">
-                                            {kundaliData.rashiHi || kundaliData.rashi}
-                                        </span>
-                                    </h2>
-                                    <div className="text-xs text-textMuted mt-1">
-                                        {new Date(kundaliData.dob).toLocaleDateString(isHi ? 'hi-IN' : 'en-US')} • {kundaliData.tob} • {kundaliData.place}
+                            {/* 4 Pillars Header */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div className="glass-card p-3.5 rounded-xl border border-glassBorder/15 text-center">
+                                    <div className="text-[10px] uppercase font-bold text-primary tracking-wider">{t.lagnaAscendant}</div>
+                                    <div className="text-lg font-extrabold text-textMain mt-0.5">
+                                        {isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}
+                                    </div>
+                                    <div className="text-[11px] text-textMuted font-mono">
+                                        {kundaliData.lagna?.dms || `${kundaliData.lagna?.degree?.toFixed(2)}°`}
                                     </div>
                                 </div>
-                                <div className="flex flex-wrap gap-2">
-                                    <Link
-                                        to={`/ai-astrologer${kundaliData.id ? `?kundaliId=${kundaliData.id}` : ''}`}
-                                        className="py-2 px-3.5 text-xs flex items-center gap-1.5 font-bold bg-gradient-to-r from-purple-600 to-primary text-white rounded-xl shadow-md hover:scale-105 transition-all"
-                                    >
-                                        <Sparkles size={15} /> Ask AI Astrologer
-                                    </Link>
-                                    <button
-                                        type="button"
-                                        onClick={handleDownloadPDF}
-                                        className="btn-secondary py-2 px-3.5 text-xs flex items-center gap-1.5 font-bold hover:bg-amber-500 hover:text-white transition-all shadow-sm"
-                                    >
-                                        <Download size={15} /> {t.downloadPDF}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handlePrint}
-                                        className="btn-primary py-2 px-3.5 text-xs flex items-center gap-1.5 font-bold bg-gradient-to-r from-red-600 to-amber-600 shadow-sm"
-                                    >
-                                        <Printer size={15} /> {t.print}
-                                    </button>
+                                <div className="glass-card p-3.5 rounded-xl border border-glassBorder/15 text-center">
+                                    <div className="text-[10px] uppercase font-bold text-sky-500 tracking-wider">{t.chandraRashi}</div>
+                                    <div className="text-lg font-extrabold text-textMain mt-0.5">
+                                        {isHi ? kundaliData.rashiHi || kundaliData.rashi : kundaliData.rashi}
+                                    </div>
+                                    <div className="text-[11px] text-textMuted">
+                                        {kundaliData.avakahada?.rashiLord ? `${t.rashiLord}: ${kundaliData.avakahada.rashiLord}` : 'Moon Sign'}
+                                    </div>
+                                </div>
+                                <div className="glass-card p-3.5 rounded-xl border border-glassBorder/15 text-center">
+                                    <div className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">{t.birthNakshatra}</div>
+                                    <div className="text-lg font-extrabold text-textMain mt-0.5">
+                                        {isHi ? kundaliData.nakshatraHi || kundaliData.nakshatra : kundaliData.nakshatra}
+                                    </div>
+                                    <div className="text-[11px] text-textMuted">
+                                        {t.nakshatraPada} {kundaliData.pada || 1}
+                                    </div>
+                                </div>
+                                <div className="glass-card p-3.5 rounded-xl border border-glassBorder/15 text-center">
+                                    <div className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider">{t.namaakshar}</div>
+                                    <div className="text-2xl font-black text-textMain mt-0.5">
+                                        {kundaliData.avakahada?.namaakshar || 'अ'}
+                                    </div>
+                                    <div className="text-[11px] text-textMuted">
+                                        {kundaliData.avakahada?.paya || 'Paya'}
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Screen-Only Divisional Charts Interactive Switcher */}
-                            <div className="print:hidden p-4 bg-amber-50/50 rounded-2xl border border-amber-300 shadow-xs">
-                                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                                    <h3 className="text-sm font-bold text-[#B91C1C] flex items-center gap-1.5">
-                                        <Layers size={16} className="text-amber-700" />
+                            {/* Chart Container with Divisional Selectors */}
+                            <div className="glass-card p-5 rounded-2xl border border-glassBorder/10 space-y-4">
+                                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-glassBorder/10 pb-3">
+                                    <h3 className="text-sm font-bold text-textMain flex items-center gap-2">
+                                        <Layers size={16} className="text-primary" />
                                         {t.divisionalChartsTitle}
                                     </h3>
-                                    <div className="flex flex-wrap gap-1">
+                                    <div className="flex flex-wrap gap-1.5">
                                         {[
                                             { id: 'D1', label: t.d1Title },
                                             { id: 'D9', label: t.d9Title },
@@ -560,10 +630,10 @@ const KundaliForm = () => {
                                                 key={ch.id}
                                                 type="button"
                                                 onClick={() => setActiveDivChart(ch.id)}
-                                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                                                     activeDivChart === ch.id
-                                                        ? 'bg-amber-600 text-white shadow-xs'
-                                                        : 'bg-white text-gray-700 hover:bg-amber-100 border border-amber-200'
+                                                        ? 'bg-primary text-white shadow-sm'
+                                                        : 'bg-surface border border-glassBorder/15 text-textMuted hover:text-textMain'
                                                 }`}
                                             >
                                                 {ch.label}
@@ -571,618 +641,575 @@ const KundaliForm = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <div className="flex justify-center p-2 bg-white rounded-xl border border-amber-200">
-                                    <KundaliChart
-                                        kundaliData={kundaliData}
-                                        lang={lang}
-                                        activeChartType={activeDivChart}
-                                        showControls={false}
-                                        watermarkType={watermarkType}
-                                    />
+
+                                <div className="flex justify-center p-2">
+                                    <div className="w-full max-w-[380px]">
+                                        <KundaliChart
+                                            kundaliData={kundaliData}
+                                            lang={lang}
+                                            activeChartType={activeDivChart}
+                                            showControls={false}
+                                            watermarkType={watermarkType}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* ========================================================================= */}
-                            {/* MULTI-PAGE PRINTABLE CONTAINER (3 Distinct Sheets with Perfect Margins)   */}
-                            {/* ========================================================================= */}
-                            <div ref={printRef} className="patrika-container space-y-8 print:space-y-0">
-                                
-                                {/* --------------------------------------------------------------------- */}
-                                {/* SHEET 1: मुख्य कुण्डली, पंचांग एवं ग्रह स्पष्ट सारणी (PAGE 1 OF 3)    */}
-                                {/* --------------------------------------------------------------------- */}
-                                <div
-                                    className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] p-6 sm:p-8 rounded-2xl shadow-xl overflow-hidden ${getBorderStyleClass()}`}
-                                    style={{ fontFamily: '"Outfit", serif, sans-serif' }}
-                                >
-                                    {renderWatermarkForSheet()}
-
-                                    <div className="relative z-10">
-                                        {/* Auspicious Header (मंगलाचरण) */}
-                                        <div className="text-center pb-4 mb-4 border-b-2 border-[#B91C1C]/25">
-                                            <div className="text-2xl font-bold text-[#B91C1C] tracking-widest mb-0.5">
-                                                {t.omGanesh}
-                                            </div>
-                                            <div className="text-lg md:text-xl font-extrabold text-[#78350F] uppercase tracking-wider">
-                                                {t.janamPatrika}
-                                            </div>
-
-                                            {/* Native Personal Details Banner */}
-                                            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-[#FEF3C7]/80 p-2.5 rounded-xl border border-[#F59E0B]/40 text-left text-xs">
-                                                <div>
-                                                    <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.fullName}:</span>
-                                                    <span className="font-bold text-[#1F2937] text-sm">{kundaliData.name}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.dateOfBirth}:</span>
-                                                    <span className="font-semibold text-[#1F2937]">
-                                                        {new Date(kundaliData.dob).toLocaleDateString(isHi ? 'hi-IN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.timeOfBirth}:</span>
-                                                    <span className="font-semibold text-[#1F2937]">{kundaliData.tob}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.placeOfBirth}:</span>
-                                                    <span className="font-semibold text-[#1F2937]">{kundaliData.place}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Coordinates & Ayanamsha Info */}
-                                            <div className="mt-1.5 text-[10px] text-[#78350F]/90 flex flex-wrap justify-center gap-3">
-                                                <span><strong>{t.latitude}:</strong> {kundaliData.lat ? kundaliData.lat.toFixed(4) : '28.6139'}°</span>
-                                                <span><strong>{t.longitude}:</strong> {kundaliData.lon ? kundaliData.lon.toFixed(4) : '77.2090'}°</span>
-                                                <span><strong>{t.timezone}:</strong> GMT+{kundaliData.timezone || 5.5}</span>
-                                                <span><strong>{t.ayanamsha}:</strong> {kundaliData.ayanamshaDMS || (kundaliData.ayanamsha ? kundaliData.ayanamsha.toFixed(2) + '°' : '24° 14\'')}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* 4 Key Pillars Banner */}
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                                            <div className="p-2 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200 text-center shadow-xs">
-                                                <div className="text-[9px] text-red-700 uppercase font-bold tracking-wider">{t.lagnaAscendant}</div>
-                                                <div className="text-base font-extrabold text-red-900 leading-tight">
-                                                    {isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}
-                                                </div>
-                                                <div className="text-[10px] font-semibold text-red-700">
-                                                    {kundaliData.lagna?.dms || `${kundaliData.lagna?.degree?.toFixed(2)}°`}
-                                                </div>
-                                            </div>
-
-                                            <div className="p-2 bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl border border-blue-200 text-center shadow-xs">
-                                                <div className="text-[9px] text-blue-700 uppercase font-bold tracking-wider">{t.chandraRashi}</div>
-                                                <div className="text-base font-extrabold text-blue-900 leading-tight">
-                                                    {isHi ? kundaliData.rashiHi || kundaliData.rashi : kundaliData.rashi}
-                                                </div>
-                                                <div className="text-[10px] font-semibold text-blue-700">
-                                                    {kundaliData.avakahada?.rashiLord ? `${t.rashiLord}: ${kundaliData.avakahada.rashiLord}` : 'Moon Sign'}
-                                                </div>
-                                            </div>
-
-                                            <div className="p-2 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-200 text-center shadow-xs">
-                                                <div className="text-[9px] text-amber-700 uppercase font-bold tracking-wider">{t.birthNakshatra}</div>
-                                                <div className="text-base font-extrabold text-amber-900 leading-tight">
-                                                    {isHi ? kundaliData.nakshatraHi || kundaliData.nakshatra : kundaliData.nakshatra}
-                                                </div>
-                                                <div className="text-[10px] font-semibold text-amber-700">
-                                                    {t.nakshatraPada} {kundaliData.pada || 1}
-                                                </div>
-                                            </div>
-
-                                            <div className="p-2 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 text-center shadow-xs">
-                                                <div className="text-[9px] text-emerald-700 uppercase font-bold tracking-wider">{t.namaakshar}</div>
-                                                <div className="text-xl font-black text-emerald-900 leading-tight">
-                                                    {kundaliData.avakahada?.namaakshar || 'अ'}
-                                                </div>
-                                                <div className="text-[10px] font-semibold text-emerald-700">
-                                                    {kundaliData.avakahada?.paya || 'Paya'}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Dual Birth Charts (D1 Lagna & D9 Navamsha side-by-side) */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 items-start">
-                                            <div className="p-3 bg-white rounded-xl border border-amber-300 shadow-xs flex flex-col items-center">
-                                                <KundaliChart
-                                                    kundaliData={kundaliData}
-                                                    lang={lang}
-                                                    activeChartType="D1"
-                                                    showControls={false}
-                                                    size="compact"
-                                                    watermarkType={watermarkType}
-                                                />
-                                            </div>
-                                            <div className="p-3 bg-white rounded-xl border border-amber-300 shadow-xs flex flex-col items-center">
-                                                <KundaliChart
-                                                    kundaliData={kundaliData}
-                                                    lang={lang}
-                                                    activeChartType="D9"
-                                                    showControls={false}
-                                                    size="compact"
-                                                    watermarkType={watermarkType}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Birth Panchang & Avakahada Chakra Tables (Compact 2-column) */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                                            <div className="p-2.5 bg-white rounded-lg border border-amber-200 text-[11px]">
-                                                <div className="font-bold text-[#B91C1C] border-b border-amber-200 pb-1 mb-1.5 flex items-center gap-1">
-                                                    <Sun size={13} className="text-amber-600" />
-                                                    {t.panchangTitle}
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                                                    <div><span className="text-gray-500">{t.tithi}:</span> <strong className="text-gray-900">{kundaliData.panchang?.tithi || 'N/A'}</strong></div>
-                                                    <div><span className="text-gray-500">{t.vaar}:</span> <strong className="text-gray-900">{kundaliData.panchang?.vaar || 'N/A'}</strong></div>
-                                                    <div><span className="text-gray-500">{t.yoga}:</span> <strong className="text-gray-900">{kundaliData.panchang?.yoga || 'N/A'}</strong></div>
-                                                    <div><span className="text-gray-500">{t.karana}:</span> <strong className="text-gray-900">{kundaliData.panchang?.karana || 'N/A'}</strong></div>
-                                                    <div className="col-span-2"><span className="text-gray-500">{t.sunrise} / {t.sunset}:</span> <strong className="text-gray-900">{kundaliData.panchang?.sunrise || '06:00'} / {kundaliData.panchang?.sunset || '18:30'}</strong></div>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-2.5 bg-white rounded-lg border border-amber-200 text-[11px]">
-                                                <div className="font-bold text-[#B91C1C] border-b border-amber-200 pb-1 mb-1.5 flex items-center gap-1">
-                                                    <Moon size={13} className="text-blue-600" />
-                                                    {t.avakahadaTitle}
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                                                    <div><span className="text-gray-500">{t.varna}:</span> <strong className="text-gray-900">{kundaliData.avakahada?.varna || 'N/A'}</strong></div>
-                                                    <div><span className="text-gray-500">{t.vashya}:</span> <strong className="text-gray-900">{kundaliData.avakahada?.vashya || 'N/A'}</strong></div>
-                                                    <div><span className="text-gray-500">{t.yoni}:</span> <strong className="text-gray-900">{kundaliData.avakahada?.yoni || 'N/A'}</strong></div>
-                                                    <div><span className="text-gray-500">{t.gana}:</span> <strong className="text-gray-900">{kundaliData.avakahada?.gana || 'N/A'}</strong></div>
-                                                    <div><span className="text-gray-500">{t.nadi}:</span> <strong className="text-gray-900">{kundaliData.avakahada?.nadi || 'N/A'}</strong></div>
-                                                    <div><span className="text-gray-500">{t.paya}:</span> <strong className="text-gray-900">{kundaliData.avakahada?.paya || 'Silver'}</strong></div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Detailed Planetary Positions & Dignities Table */}
-                                        <div className="overflow-x-auto rounded-lg border border-amber-200 bg-white">
-                                            <table className="w-full text-[10px] text-left">
-                                                <thead className="bg-[#FEF3C7] text-[#78350F] uppercase font-bold border-b border-amber-300">
-                                                    <tr>
-                                                        <th className="px-2 py-1.5">{t.planet}</th>
-                                                        <th className="px-2 py-1.5">{t.sign}</th>
-                                                        <th className="px-2 py-1.5">{t.degree}</th>
-                                                        <th className="px-2 py-1.5">{t.house}</th>
-                                                        <th className="px-2 py-1.5">{t.nakshatra}</th>
-                                                        <th className="px-2 py-1.5">{isHi ? 'नवमांश' : 'Navamsha'}</th>
-                                                        <th className="px-2 py-1.5">{t.dignity}</th>
-                                                        <th className="px-2 py-1.5">{t.avastha}</th>
-                                                        <th className="px-2 py-1.5">{t.combustStatus}</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-amber-100">
-                                                    <tr className="bg-amber-50/60 font-semibold">
-                                                        <td className="px-2 py-1 text-red-900 font-bold">{isHi ? 'लग्न' : 'Asc'}</td>
-                                                        <td className="px-2 py-1">{isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}</td>
-                                                        <td className="px-2 py-1 font-mono">{kundaliData.lagna?.dms || `${kundaliData.lagna?.degree?.toFixed(2)}°`}</td>
-                                                        <td className="px-2 py-1 font-bold">1</td>
-                                                        <td className="px-2 py-1">-</td>
-                                                        <td className="px-2 py-1">{isHi ? kundaliData.navamsha?.navamshaLagna?.signHi : kundaliData.navamsha?.navamshaLagna?.sign}</td>
-                                                        <td className="px-2 py-1">-</td>
-                                                        <td className="px-2 py-1">-</td>
-                                                        <td className="px-2 py-1 text-emerald-700">{t.directPlanet}</td>
-                                                    </tr>
-                                                    {kundaliData.planets?.map((p) => (
-                                                        <tr key={p.name} className="hover:bg-amber-50/30">
-                                                            <td className="px-2 py-1 font-bold text-gray-900">
-                                                                {isHi ? `${p.hindi} (${p.abbrHi})` : `${p.name} (${p.abbrEn})`}
-                                                                {p.isRetrograde && <span className="ml-1 text-red-600 font-bold">{isHi ? '(व)' : '(R)'}</span>}
-                                                            </td>
-                                                            <td className="px-2 py-1 text-gray-700">{isHi ? p.signHi || p.sign : p.sign}</td>
-                                                            <td className="px-2 py-1 font-mono text-gray-800">{p.dms || `${p.degree?.toFixed(2)}°`}</td>
-                                                            <td className="px-2 py-1 font-bold text-amber-950">{p.house}</td>
-                                                            <td className="px-2 py-1 text-gray-700">{isHi ? p.nakshatraHi || p.nakshatra : p.nakshatra} ({p.pada})</td>
-                                                            <td className="px-2 py-1 text-gray-700">{isHi ? p.navamshaSignHi || p.navamshaSign : p.navamshaSign}</td>
-                                                            <td className="px-2 py-1">
-                                                                <span className={`px-1 py-0.2 rounded font-bold ${
-                                                                    (p.dignityEn || '').includes('Exalted') ? 'bg-amber-100 text-amber-900' :
-                                                                    (p.dignityEn || '').includes('Debilitated') ? 'bg-red-100 text-red-900' :
-                                                                    (p.dignityEn || '').includes('Own') ? 'bg-emerald-100 text-emerald-900' :
-                                                                    'text-gray-700'
-                                                                }`}>
-                                                                    {isHi ? p.dignity || 'सम' : p.dignityEn || 'Neutral'}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-2 py-1 text-gray-700">{isHi ? p.avastha || '-' : p.avasthaEn || '-'}</td>
-                                                            <td className="px-2 py-1">
-                                                                {p.isCombust ? <span className="text-red-600 font-bold">{t.combust}</span> :
-                                                                 p.isRetrograde ? <span className="text-orange-700 font-bold">{t.retrograde}</span> :
-                                                                 <span className="text-emerald-700">{t.directPlanet}</span>}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        {/* Sheet 1 Footer */}
-                                        <div className="mt-4 pt-2 border-t border-amber-200/80 flex justify-between items-center text-[10px] text-gray-500">
-                                            <span>{kundaliData.name} • Janam Patrika</span>
-                                            <span className="font-bold text-[#B91C1C]">{isHi ? '॥ पृष्ठ १/३ ॥' : 'Page 1 of 3'}</span>
-                                            <span>Astrolite Vedic Astrology</span>
-                                        </div>
-                                    </div>
+                            {/* Planetary Table */}
+                            <div className="glass-card rounded-2xl border border-glassBorder/10 overflow-hidden shadow-sm">
+                                <div className="p-4 border-b border-glassBorder/10 flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-textMain flex items-center gap-2">
+                                        <Compass size={16} className="text-primary" />
+                                        Planetary Positions & Dignities
+                                    </h3>
+                                    <span className="text-xs text-textMuted font-mono">Lahiri Ayanamsha</span>
                                 </div>
-
-                                {/* --------------------------------------------------------------------- */}
-                                {/* SHEET 2: द्वादश भाव विस्तृत फलादेश, सर्वाष्टकवर्ग एवं शनि विचार (PAGE 2) */}
-                                {/* --------------------------------------------------------------------- */}
-                                <div
-                                    className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] p-6 sm:p-8 rounded-2xl shadow-xl overflow-hidden ${getBorderStyleClass()}`}
-                                    style={{ fontFamily: '"Outfit", serif, sans-serif' }}
-                                >
-                                    {renderWatermarkForSheet()}
-
-                                    <div className="relative z-10">
-                                        {/* Sheet 2 Header */}
-                                        <div className="text-center pb-3 mb-4 border-b-2 border-[#B91C1C]/25">
-                                            <div className="text-base md:text-lg font-extrabold text-[#78350F] uppercase tracking-wider">
-                                                {isHi ? '॥ द्वादश भाव विस्तृत फलादेश एवं सर्वाष्टकवर्ग विचार ॥' : '12 Houses In-Depth Analysis & Sarvashtakavarga'}
-                                            </div>
-                                            <div className="text-[11px] text-[#92400E]">
-                                                {kundaliData.name} • {kundaliData.dob?.split('T')[0]} • {kundaliData.place}
-                                            </div>
-                                        </div>
-
-                                        {/* 12 Bhavaphala (द्वादश भाव विस्तृत विश्लेषण - 2 balanced columns) */}
-                                        {kundaliData.bhavaphala && (
-                                            <div className="mb-5">
-                                                <div className="text-xs font-bold text-[#B91C1C] mb-2 flex items-center gap-1.5">
-                                                    <BookOpen size={14} className="text-amber-700" />
-                                                    {t.bhavaphalaTitle}
-                                                </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-                                                    {kundaliData.bhavaphala.map((b) => (
-                                                        <div key={b.houseNum} className="p-2.5 bg-white rounded-lg border border-amber-200/90">
-                                                            <div className="flex items-center justify-between pb-1 mb-1 border-b border-amber-100">
-                                                                <span className="font-bold text-[#78350F]">
-                                                                    {isHi ? b.nameHi : b.nameEn}
-                                                                </span>
-                                                                <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 font-semibold text-[10px]">
-                                                                    {isHi ? b.signHi : b.sign} ({t.houseLord}: {b.lord})
-                                                                </span>
-                                                            </div>
-                                                            <div className="space-y-0.5 text-gray-700">
-                                                                <div><strong className="text-gray-900">{t.placement}:</strong> {isHi ? b.lordPlacement : b.lordPlacementEn}</div>
-                                                                <div>
-                                                                    <strong className="text-gray-900">{t.occupants}:</strong>{' '}
-                                                                    {b.occupants && b.occupants.length > 0 ? (
-                                                                        b.occupants.map(o => (isHi ? `${o.hindi} (${o.dignity})` : `${o.name} (${o.dignity})`)).join(', ')
-                                                                    ) : (
-                                                                        <span className="text-gray-400">{isHi ? 'कोई ग्रह नहीं' : 'Empty'}</span>
-                                                                    )}
-                                                                </div>
-                                                                <div className="text-[10px] text-[#92400E] italic">{isHi ? b.sigHi : b.sigEn}</div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Sarvashtakavarga (SAV 337 Points) */}
-                                        {kundaliData.ashtakvarga && (
-                                            <div className="mb-5">
-                                                <div className="flex justify-between items-center text-xs font-bold text-[#B91C1C] mb-2">
-                                                    <span className="flex items-center gap-1.5">
-                                                        <Sparkles size={14} className="text-amber-700" />
-                                                        {t.ashtakvargaTitle}
-                                                    </span>
-                                                    <span className="text-[#92400E] font-bold">
-                                                        {t.totalPoints} {kundaliData.ashtakvarga.totalPoints || 337}
-                                                    </span>
-                                                </div>
-                                                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center text-xs">
-                                                    {kundaliData.ashtakvarga.houses?.map((h) => (
-                                                        <div
-                                                            key={h.house}
-                                                            className={`p-2 rounded-lg border ${
-                                                                h.points >= 30 ? 'bg-emerald-50 border-emerald-300' :
-                                                                h.points >= 26 ? 'bg-amber-50 border-amber-300' :
-                                                                'bg-red-50 border-red-300'
-                                                            }`}
-                                                        >
-                                                            <div className="text-[9px] text-gray-500 font-bold">
-                                                                {isHi ? `भाव ${toDevnagariNum(h.house)}` : `H-${h.house}`} ({isHi ? h.signHi : h.sign})
-                                                            </div>
-                                                            <div className={`text-lg font-black leading-tight ${
-                                                                h.points >= 30 ? 'text-emerald-900' :
-                                                                h.points >= 26 ? 'text-amber-900' :
-                                                                'text-red-900'
-                                                            }`}>
-                                                                {h.points}
-                                                            </div>
-                                                            <div className="text-[9px] text-gray-600 mt-0.5">{h.rating}</div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Shani Sade Sati & Dhaiya Analysis */}
-                                        {kundaliData.sadeSati && (
-                                            <div className="mb-4">
-                                                <div className="text-xs font-bold text-[#B91C1C] mb-2 flex items-center gap-1.5">
-                                                    <Flame size={14} className="text-indigo-700" />
-                                                    {t.sadeSatiTitle}
-                                                </div>
-                                                <div className={`p-3 rounded-xl border-2 ${
-                                                    kundaliData.sadeSati.isUnderSadeSati ? 'bg-amber-50/80 border-amber-300' : 'bg-emerald-50/80 border-emerald-300'
-                                                }`}>
-                                                    <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="font-bold text-xs text-gray-900">{t.shaniPhase}</span>
-                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                                                            kundaliData.sadeSati.isUnderSadeSati ? 'bg-amber-200 text-amber-900' : 'bg-emerald-200 text-emerald-900'
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-xs text-left">
+                                        <thead className="bg-surface/80 text-textMuted uppercase font-bold border-b border-glassBorder/10">
+                                            <tr>
+                                                <th className="px-4 py-3">{t.planet}</th>
+                                                <th className="px-3 py-3">{t.sign}</th>
+                                                <th className="px-3 py-3">{t.degree}</th>
+                                                <th className="px-3 py-3">{t.house}</th>
+                                                <th className="px-3 py-3">{t.nakshatra}</th>
+                                                <th className="px-3 py-3">{isHi ? 'नवमांश' : 'Navamsha'}</th>
+                                                <th className="px-3 py-3">{t.dignity}</th>
+                                                <th className="px-4 py-3">{t.combustStatus}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-glassBorder/10">
+                                            <tr className="bg-primary/5 font-semibold">
+                                                <td className="px-4 py-2.5 font-bold text-primary">{isHi ? 'लग्न' : 'Ascendant'}</td>
+                                                <td className="px-3 py-2.5">{isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}</td>
+                                                <td className="px-3 py-2.5 font-mono">{kundaliData.lagna?.dms || `${kundaliData.lagna?.degree?.toFixed(2)}°`}</td>
+                                                <td className="px-3 py-2.5 font-bold">1</td>
+                                                <td className="px-3 py-2.5">-</td>
+                                                <td className="px-3 py-2.5">{isHi ? kundaliData.navamsha?.navamshaLagna?.signHi : kundaliData.navamsha?.navamshaLagna?.sign}</td>
+                                                <td className="px-3 py-2.5">-</td>
+                                                <td className="px-4 py-2.5 text-emerald-600 dark:text-emerald-400">{t.directPlanet}</td>
+                                            </tr>
+                                            {kundaliData.planets?.map((p) => (
+                                                <tr key={p.name} className="hover:bg-surface/60 transition-colors">
+                                                    <td className="px-4 py-2.5 font-semibold text-textMain">
+                                                        {isHi ? `${p.hindi} (${p.abbrHi})` : `${p.name} (${p.abbrEn})`}
+                                                        {p.isRetrograde && <span className="ml-1 text-red-500 font-bold">{isHi ? '(व)' : '(R)'}</span>}
+                                                    </td>
+                                                    <td className="px-3 py-2.5 text-textMuted">{isHi ? p.signHi || p.sign : p.sign}</td>
+                                                    <td className="px-3 py-2.5 font-mono text-textMain">{p.dms || `${p.degree?.toFixed(2)}°`}</td>
+                                                    <td className="px-3 py-2.5 font-bold text-primary">{p.house}</td>
+                                                    <td className="px-3 py-2.5 text-textMuted">{isHi ? p.nakshatraHi || p.nakshatra : p.nakshatra} ({p.pada})</td>
+                                                    <td className="px-3 py-2.5 text-textMuted">{isHi ? p.navamshaSignHi || p.navamshaSign : p.navamshaSign}</td>
+                                                    <td className="px-3 py-2.5">
+                                                        <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${
+                                                            (p.dignityEn || '').includes('Exalted') ? 'bg-amber-500/20 text-amber-500' :
+                                                            (p.dignityEn || '').includes('Debilitated') ? 'bg-red-500/20 text-red-500' :
+                                                            (p.dignityEn || '').includes('Own') ? 'bg-emerald-500/20 text-emerald-500' :
+                                                            'text-textMuted'
                                                         }`}>
-                                                            {kundaliData.sadeSati.isUnderSadeSati ? (isHi ? 'प्रभावाधीन' : 'Active') : (isHi ? 'मुक्त / कोई प्रभाव नहीं' : 'Free / Inactive')}
+                                                            {isHi ? p.dignity || 'सम' : p.dignityEn || 'Neutral'}
                                                         </span>
-                                                    </div>
-                                                    <p className="text-[11px] text-gray-800 leading-relaxed mb-2">
-                                                        {kundaliData.sadeSati.status}
-                                                    </p>
-                                                    {kundaliData.sadeSati.remedy && (
-                                                        <div className="p-2 bg-white rounded-lg border border-amber-200 text-[10px] text-indigo-950">
-                                                            <strong className="text-indigo-900">{t.remedyTitle}:</strong> {kundaliData.sadeSati.remedy}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Sheet 2 Footer */}
-                                        <div className="mt-4 pt-2 border-t border-amber-200/80 flex justify-between items-center text-[10px] text-gray-500">
-                                            <span>{kundaliData.name} • Bhavaphala & Ashtakvarga</span>
-                                            <span className="font-bold text-[#B91C1C]">{isHi ? '॥ पृष्ठ २/३ ॥' : 'Page 2 of 3'}</span>
-                                            <span>Astrolite Vedic Astrology</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* --------------------------------------------------------------------- */}
-                                {/* SHEET 3: महादशा, दोष विश्लेषण एवं सम्पूर्ण फलादेश (PAGE 3 OF 3)       */}
-                                {/* --------------------------------------------------------------------- */}
-                                <div
-                                    className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] p-6 sm:p-8 rounded-2xl shadow-xl overflow-hidden ${getBorderStyleClass()}`}
-                                    style={{ fontFamily: '"Outfit", serif, sans-serif' }}
-                                >
-                                    {renderWatermarkForSheet()}
-
-                                    <div className="relative z-10">
-                                        {/* Sheet 3 Header */}
-                                        <div className="text-center pb-3 mb-4 border-b-2 border-[#B91C1C]/25">
-                                            <div className="text-base md:text-lg font-extrabold text-[#78350F] uppercase tracking-wider">
-                                                {isHi ? '॥ विंशोत्तरी महादशा, दोष विचार एवं सम्पूर्ण फलादेश ॥' : 'Vimshottari Dasha, Dosha & Comprehensive Predictions'}
-                                            </div>
-                                            <div className="text-[11px] text-[#92400E]">
-                                                {kundaliData.name} • {kundaliData.dob?.split('T')[0]} • {kundaliData.place}
-                                            </div>
-                                        </div>
-
-                                        {/* Vimshottari Mahadasha Table */}
-                                        {kundaliData.dashas && (
-                                            <div className="mb-4">
-                                                <div className="flex justify-between items-center text-xs font-bold text-[#B91C1C] mb-1.5">
-                                                    <span className="flex items-center gap-1.5">
-                                                        <Clock size={14} className="text-amber-600" />
-                                                        {t.dashaTitle}
-                                                    </span>
-                                                    <span className="text-[11px] text-[#92400E] font-medium">
-                                                        {t.dashaBalance}: <strong className="text-gray-900">{kundaliData.dashas.birthBalance}</strong>
-                                                    </span>
-                                                </div>
-                                                <div className="overflow-x-auto rounded-lg border border-amber-200 bg-white">
-                                                    <table className="w-full text-[10px] text-left">
-                                                        <thead className="bg-[#FEF3C7] text-[#78350F] uppercase font-bold border-b border-amber-300">
-                                                            <tr>
-                                                                <th className="px-2 py-1">{t.mahadasha}</th>
-                                                                <th className="px-2 py-1">{t.periodYears}</th>
-                                                                <th className="px-2 py-1">{t.startDate}</th>
-                                                                <th className="px-2 py-1">{t.endDate}</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody className="divide-y divide-amber-100">
-                                                            {kundaliData.dashas.periods?.map((d, i) => (
-                                                                <tr key={i} className={i === 0 ? 'bg-amber-50/60 font-semibold' : 'hover:bg-amber-50/30'}>
-                                                                    <td className="px-2 py-1 font-bold text-gray-900">
-                                                                        {isHi ? `${d.hindi} महादशा` : `${d.lord} Mahadasha`}
-                                                                        {i === 0 && <span className="ml-1 text-[9px] text-amber-700 font-normal">({isHi ? 'जन्म कालीन' : 'At Birth'})</span>}
-                                                                    </td>
-                                                                    <td className="px-2 py-1">{d.years} {isHi ? 'वर्ष' : 'Yrs'}</td>
-                                                                    <td className="px-2 py-1 font-mono">{d.startDate}</td>
-                                                                    <td className="px-2 py-1 font-mono">{d.endDate}</td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Dosha Analysis & Authentic Remedies */}
-                                        {kundaliData.dosha && (
-                                            <div className="mb-4">
-                                                <div className="text-xs font-bold text-[#B91C1C] mb-1.5 flex items-center gap-1.5">
-                                                    <Flame size={14} className="text-red-600" />
-                                                    {t.doshaTitle}
-                                                </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-2">
-                                                    <div className={`p-2.5 rounded-lg border-2 ${
-                                                        kundaliData.dosha.manglik ? 'bg-red-50/80 border-red-300' : 'bg-emerald-50/80 border-emerald-300'
-                                                    }`}>
-                                                        <div className="flex justify-between items-center">
-                                                            <strong className="text-gray-900">{t.manglikDosha}</strong>
-                                                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-                                                                kundaliData.dosha.manglik ? 'bg-red-200 text-red-900' : 'bg-emerald-200 text-emerald-900'
-                                                            }`}>
-                                                                {kundaliData.dosha.manglik ? (isHi ? 'उपस्थित' : 'Present') : (isHi ? 'अनुपस्थित' : 'Absent')}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-[11px] text-gray-700 mt-1">{kundaliData.dosha.manglikStatus}</div>
-                                                    </div>
-
-                                                    <div className={`p-2.5 rounded-lg border-2 ${
-                                                        kundaliData.dosha.kaalSarp ? 'bg-red-50/80 border-red-300' : 'bg-emerald-50/80 border-emerald-300'
-                                                    }`}>
-                                                        <div className="flex justify-between items-center">
-                                                            <strong className="text-gray-900">{t.kaalSarpDosha}</strong>
-                                                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-                                                                kundaliData.dosha.kaalSarp ? 'bg-red-200 text-red-900' : 'bg-emerald-200 text-emerald-900'
-                                                            }`}>
-                                                                {kundaliData.dosha.kaalSarp ? (isHi ? 'उपस्थित' : 'Present') : (isHi ? 'अनुपस्थित' : 'Absent')}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-[11px] text-gray-700 mt-1">{kundaliData.dosha.kaalSarpType}</div>
-                                                    </div>
-                                                </div>
-
-                                                {kundaliData.dosha.remedies && kundaliData.dosha.remedies.length > 0 && (
-                                                    <div className="p-2.5 bg-amber-50/80 rounded-lg border border-amber-200 text-[11px] text-gray-800">
-                                                        <strong className="text-amber-900 block mb-1">{t.suggestedRemedies}:</strong>
-                                                        <ul className="space-y-0.5 list-disc list-inside">
-                                                            {kundaliData.dosha.remedies.map((rem, idx) => (
-                                                                <li key={idx}>{rem}</li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Comprehensive Vedic Horoscope Predictions (6 concise sections) */}
-                                        {kundaliData.horoscope && (
-                                            <div className="mb-4">
-                                                <div className="text-xs font-bold text-[#B91C1C] mb-2 flex items-center gap-1.5">
-                                                    <Award size={14} className="text-amber-600" />
-                                                    {t.horoscopeTitle}
-                                                </div>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-gray-800">
-                                                    <div className="p-2.5 bg-white rounded-lg border border-amber-200">
-                                                        <strong className="text-[#78350F] block mb-0.5">{t.personalitySection}</strong>
-                                                        <p className="leading-relaxed">{isHi ? kundaliData.horoscope.personality?.hi : kundaliData.horoscope.personality?.en}</p>
-                                                    </div>
-                                                    <div className="p-2.5 bg-white rounded-lg border border-amber-200">
-                                                        <strong className="text-[#78350F] block mb-0.5">{t.mindSection}</strong>
-                                                        <p className="leading-relaxed">{isHi ? kundaliData.horoscope.mindEmotion?.hi : kundaliData.horoscope.mindEmotion?.en}</p>
-                                                    </div>
-                                                    <div className="p-2.5 bg-white rounded-lg border border-amber-200">
-                                                        <strong className="text-[#78350F] block mb-0.5">{t.wealthSection}</strong>
-                                                        <p className="leading-relaxed">{isHi ? kundaliData.horoscope.wealth?.hi : kundaliData.horoscope.wealth?.en}</p>
-                                                    </div>
-                                                    <div className="p-2.5 bg-white rounded-lg border border-amber-200">
-                                                        <strong className="text-[#78350F] block mb-0.5">{t.careerSection}</strong>
-                                                        <p className="leading-relaxed">{isHi ? kundaliData.horoscope.career?.hi : kundaliData.horoscope.career?.en}</p>
-                                                    </div>
-                                                    <div className="p-2.5 bg-white rounded-lg border border-amber-200">
-                                                        <strong className="text-[#78350F] block mb-0.5">{t.marriageSection}</strong>
-                                                        <p className="leading-relaxed">{isHi ? kundaliData.horoscope.marriage?.hi : kundaliData.horoscope.marriage?.en}</p>
-                                                    </div>
-                                                    <div className="p-2.5 bg-white rounded-lg border border-amber-200">
-                                                        <strong className="text-[#78350F] block mb-0.5">{t.healthSection}</strong>
-                                                        <p className="leading-relaxed">{isHi ? kundaliData.horoscope.health?.hi : kundaliData.horoscope.health?.en}</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Gemstones & Auspicious Factors */}
-                                                <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
-                                                    {kundaliData.horoscope.gemstones && (
-                                                        <div className="p-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-300">
-                                                            <strong className="text-[#78350F] flex items-center gap-1 mb-1">
-                                                                <Gem size={12} className="text-amber-700" />
-                                                                {t.gemstoneSection}
-                                                            </strong>
-                                                            <div className="grid grid-cols-3 gap-1 text-center">
-                                                                <div className="bg-white p-1 rounded border border-amber-200">
-                                                                    <span className="text-[9px] text-gray-500 block">{t.lifeStone}</span>
-                                                                    <strong className="text-gray-900">{kundaliData.horoscope.gemstones.life}</strong>
-                                                                </div>
-                                                                <div className="bg-white p-1 rounded border border-amber-200">
-                                                                    <span className="text-[9px] text-gray-500 block">{t.luckyStone}</span>
-                                                                    <strong className="text-gray-900">{kundaliData.horoscope.gemstones.lucky}</strong>
-                                                                </div>
-                                                                <div className="bg-white p-1 rounded border border-amber-200">
-                                                                    <span className="text-[9px] text-gray-500 block">{t.beneficStone}</span>
-                                                                    <strong className="text-gray-900">{kundaliData.horoscope.gemstones.benefic}</strong>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {kundaliData.horoscope.luckyFactors && (
-                                                        <div className="p-2 bg-white rounded-lg border border-amber-200">
-                                                            <strong className="text-[#78350F] block mb-1">{t.auspiciousFactors}</strong>
-                                                            <div className="grid grid-cols-4 gap-1 text-center">
-                                                                <div className="bg-amber-50/60 p-1 rounded">
-                                                                    <span className="text-[8px] text-gray-500 block">{t.luckyNumbers}</span>
-                                                                    <strong className="text-gray-900">{kundaliData.horoscope.luckyFactors.numbers}</strong>
-                                                                </div>
-                                                                <div className="bg-amber-50/60 p-1 rounded">
-                                                                    <span className="text-[8px] text-gray-500 block">{t.luckyColors}</span>
-                                                                    <strong className="text-gray-900">{kundaliData.horoscope.luckyFactors.colors?.split('(')[0]}</strong>
-                                                                </div>
-                                                                <div className="bg-amber-50/60 p-1 rounded">
-                                                                    <span className="text-[8px] text-gray-500 block">{t.luckyDays}</span>
-                                                                    <strong className="text-gray-900">{kundaliData.horoscope.luckyFactors.days?.split('(')[0]}</strong>
-                                                                </div>
-                                                                <div className="bg-amber-50/60 p-1 rounded">
-                                                                    <span className="text-[8px] text-gray-500 block">{t.ishtaDevata}</span>
-                                                                    <strong className="text-gray-900">{kundaliData.horoscope.luckyFactors.ishta?.split('/')[0]}</strong>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Pandit Certification & Blessing Footer */}
-                                        <div className="text-center pt-3 mt-3 border-t-2 border-[#B91C1C]/25 text-xs text-[#78350F]">
-                                            <div className="font-bold text-sm tracking-wider">॥ शुभं भवतु • कल्याणमस्तु ॥</div>
-
-                                            {userSettings.astrologerName && (
-                                                <div className="mt-1 text-gray-800 font-semibold text-[11px]">
-                                                    <div>{userSettings.astrologerName}</div>
-                                                    {(userSettings.contactNumber || userSettings.email) && (
-                                                        <div className="text-[10px] text-gray-600 font-normal">
-                                                            {userSettings.contactNumber && <span>{userSettings.contactNumber}</span>}
-                                                            {userSettings.contactNumber && userSettings.email && <span> • </span>}
-                                                            {userSettings.email && <span>{userSettings.email}</span>}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            <div className="text-[9px] text-gray-500 mt-1">
-                                                Astrolite Vedic Astrology • Powered by NASA JPL Ephemeris & Lahiri Ayanamsha
-                                            </div>
-                                        </div>
-
-                                        {/* Sheet 3 Footer */}
-                                        <div className="mt-3 pt-1 border-t border-amber-200/80 flex justify-between items-center text-[10px] text-gray-500">
-                                            <span>{kundaliData.name} • Dasha, Dosha & Horoscope</span>
-                                            <span className="font-bold text-[#B91C1C]">{isHi ? '॥ पृष्ठ ३/३ ॥' : 'Page 3 of 3'}</span>
-                                            <span>Astrolite Vedic Astrology</span>
-                                        </div>
-                                    </div>
+                                                    </td>
+                                                    <td className="px-4 py-2.5">
+                                                        {p.isCombust ? <span className="text-red-500 font-bold">{t.combust}</span> :
+                                                         p.isRetrograde ? <span className="text-orange-500 font-bold">{t.retrograde}</span> :
+                                                         <span className="text-emerald-500">{t.directPlanet}</span>}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="h-full min-h-[450px] glass-card flex flex-col justify-center items-center text-center p-8 border-2 border-dashed border-amber-500/20">
-                            <div className="w-20 h-20 bg-surface/50 rounded-full flex items-center justify-center mb-5 shadow-inner">
-                                <Sparkles size={36} className="text-amber-500 animate-pulse" />
-                            </div>
-                            <h3 className="text-xl sm:text-2xl font-bold text-textMain mb-2">
-                                {t.readyToExplore}
-                            </h3>
-                            <p className="text-textMuted max-w-md text-xs sm:text-sm">
-                                {t.readyDesc}
-                            </p>
                         </div>
                     )}
+
+                    {/* TAB 2: Panchang & Avakahada */}
+                    {activeTab === 'panchang' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Panchang Card */}
+                            <div className="glass-card p-6 rounded-2xl border border-glassBorder/10 space-y-4">
+                                <h3 className="text-base font-bold text-textMain flex items-center gap-2 border-b border-glassBorder/10 pb-3">
+                                    <Sun size={18} className="text-primary" />
+                                    {t.panchangTitle}
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4 text-xs">
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.tithi}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.panchang?.tithi || 'N/A'}</span>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.vaar}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.panchang?.vaar || 'N/A'}</span>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.yoga}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.panchang?.yoga || 'N/A'}</span>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.karana}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.panchang?.karana || 'N/A'}</span>
+                                    </div>
+                                    <div className="col-span-2 p-3 rounded-xl bg-surface/50 border border-glassBorder/10 flex justify-between items-center">
+                                        <span className="text-textMuted text-xs">{t.sunrise} / {t.sunset}:</span>
+                                        <span className="font-bold text-textMain text-xs font-mono">
+                                            {kundaliData.panchang?.sunrise || '06:00'} / {kundaliData.panchang?.sunset || '18:30'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Avakahada Card */}
+                            <div className="glass-card p-6 rounded-2xl border border-glassBorder/10 space-y-4">
+                                <h3 className="text-base font-bold text-textMain flex items-center gap-2 border-b border-glassBorder/10 pb-3">
+                                    <Moon size={18} className="text-sky-500" />
+                                    {t.avakahadaTitle}
+                                </h3>
+                                <div className="grid grid-cols-2 gap-4 text-xs">
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.varna}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.avakahada?.varna || 'N/A'}</span>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.vashya}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.avakahada?.vashya || 'N/A'}</span>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.yoni}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.avakahada?.yoni || 'N/A'}</span>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.gana}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.avakahada?.gana || 'N/A'}</span>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.nadi}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.avakahada?.nadi || 'N/A'}</span>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-surface/50 border border-glassBorder/10">
+                                        <span className="text-textMuted block text-[10px] uppercase font-semibold">{t.paya}</span>
+                                        <span className="font-bold text-textMain text-sm mt-0.5 block">{kundaliData.avakahada?.paya || 'Silver'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TAB 3: Dasha & Houses */}
+                    {activeTab === 'dasha' && (
+                        <div className="space-y-6">
+                            {/* Vimshottari Mahadasha */}
+                            {kundaliData.dashas && (
+                                <div className="glass-card rounded-2xl border border-glassBorder/10 overflow-hidden shadow-sm">
+                                    <div className="p-4 border-b border-glassBorder/10 flex flex-wrap justify-between items-center gap-2">
+                                        <h3 className="text-sm font-bold text-textMain flex items-center gap-2">
+                                            <Clock size={16} className="text-primary" />
+                                            {t.dashaTitle}
+                                        </h3>
+                                        <span className="text-xs text-textMuted">
+                                            {t.dashaBalance}: <strong className="text-textMain font-semibold">{kundaliData.dashas.birthBalance}</strong>
+                                        </span>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-xs text-left">
+                                            <thead className="bg-surface/80 text-textMuted uppercase font-bold border-b border-glassBorder/10">
+                                                <tr>
+                                                    <th className="px-4 py-3">{t.mahadasha}</th>
+                                                    <th className="px-3 py-3">{t.periodYears}</th>
+                                                    <th className="px-3 py-3">{t.startDate}</th>
+                                                    <th className="px-4 py-3">{t.endDate}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-glassBorder/10">
+                                                {kundaliData.dashas.periods?.map((d, i) => (
+                                                    <tr key={i} className={i === 0 ? 'bg-primary/10 font-bold' : 'hover:bg-surface/60'}>
+                                                        <td className="px-4 py-2.5 text-textMain">
+                                                            {isHi ? `${d.hindi} महादशा` : `${d.lord} Mahadasha`}
+                                                            {i === 0 && <span className="ml-2 text-[10px] px-2 py-0.5 rounded bg-primary/20 text-primary font-semibold">Current/Birth</span>}
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-textMuted">{d.years} {isHi ? 'वर्ष' : 'Yrs'}</td>
+                                                        <td className="px-3 py-2.5 font-mono text-textMuted">{d.startDate}</td>
+                                                        <td className="px-4 py-2.5 font-mono text-textMain">{d.endDate}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 12 Houses Analysis */}
+                            {kundaliData.bhavaphala && (
+                                <div className="glass-card p-6 rounded-2xl border border-glassBorder/10 space-y-4">
+                                    <h3 className="text-base font-bold text-textMain flex items-center gap-2 border-b border-glassBorder/10 pb-3">
+                                        <BookOpen size={18} className="text-primary" />
+                                        {t.bhavaphalaTitle}
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                                        {kundaliData.bhavaphala.map((b) => (
+                                            <div key={b.houseNum} className="p-3.5 rounded-xl bg-surface/50 border border-glassBorder/10 space-y-1.5 hover:border-primary/30 transition-colors">
+                                                <div className="flex items-center justify-between pb-1 border-b border-glassBorder/10">
+                                                    <span className="font-bold text-textMain text-sm">
+                                                        {isHi ? b.nameHi : b.nameEn}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-semibold">
+                                                        {isHi ? b.signHi : b.sign} ({b.lord})
+                                                    </span>
+                                                </div>
+                                                <div className="text-textMuted space-y-0.5 text-[11px]">
+                                                    <div><strong className="text-textMain">{t.placement}:</strong> {isHi ? b.lordPlacement : b.lordPlacementEn}</div>
+                                                    <div>
+                                                        <strong className="text-textMain">{t.occupants}:</strong>{' '}
+                                                        {b.occupants && b.occupants.length > 0 ? (
+                                                            b.occupants.map(o => (isHi ? `${o.hindi} (${o.dignity})` : `${o.name} (${o.dignity})`)).join(', ')
+                                                        ) : (
+                                                            <span className="text-textMuted/60">None</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Ashtakvarga */}
+                            {kundaliData.ashtakvarga && (
+                                <div className="glass-card p-6 rounded-2xl border border-glassBorder/10 space-y-4">
+                                    <div className="flex justify-between items-center border-b border-glassBorder/10 pb-3">
+                                        <h3 className="text-base font-bold text-textMain flex items-center gap-2">
+                                            <Sparkles size={18} className="text-primary" />
+                                            {t.ashtakvargaTitle}
+                                        </h3>
+                                        <span className="text-xs font-bold text-primary">
+                                            {t.totalPoints}: {kundaliData.ashtakvarga.totalPoints || 337}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 text-center text-xs">
+                                        {kundaliData.ashtakvarga.houses?.map((h) => (
+                                            <div
+                                                key={h.house}
+                                                className={`p-2.5 rounded-xl border ${
+                                                    h.points >= 30 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' :
+                                                    h.points >= 26 ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400' :
+                                                    'bg-red-500/10 border-red-500/30 text-red-600 dark:text-red-400'
+                                                }`}
+                                            >
+                                                <div className="text-[10px] font-semibold text-textMuted">
+                                                    H-{h.house} ({isHi ? h.signHi : h.sign})
+                                                </div>
+                                                <div className="text-xl font-black mt-1">
+                                                    {h.points}
+                                                </div>
+                                                <div className="text-[10px] mt-0.5 opacity-80">{h.rating}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* TAB 4: Doshas & Remedies */}
+                    {activeTab === 'doshas' && (
+                        <div className="space-y-6">
+                            {/* Dosha Cards Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Manglik */}
+                                <div className={`glass-card p-5 rounded-2xl border-2 ${
+                                    kundaliData.dosha?.manglik ? 'border-red-500/40 bg-red-500/5' : 'border-emerald-500/40 bg-emerald-500/5'
+                                }`}>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h4 className="font-bold text-sm text-textMain">{t.manglikDosha}</h4>
+                                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${
+                                            kundaliData.dosha?.manglik ? 'bg-red-500/20 text-red-500' : 'bg-emerald-500/20 text-emerald-500'
+                                        }`}>
+                                            {kundaliData.dosha?.manglik ? (isHi ? 'उपस्थित' : 'Present') : (isHi ? 'मुक्त' : 'Absent')}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-textMuted leading-relaxed">
+                                        {kundaliData.dosha?.manglikStatus || 'No Manglik dosha detected in Lagna/Moon houses.'}
+                                    </p>
+                                </div>
+
+                                {/* Kaal Sarp */}
+                                <div className={`glass-card p-5 rounded-2xl border-2 ${
+                                    kundaliData.dosha?.kaalSarp ? 'border-red-500/40 bg-red-500/5' : 'border-emerald-500/40 bg-emerald-500/5'
+                                }`}>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h4 className="font-bold text-sm text-textMain">{t.kaalSarpDosha}</h4>
+                                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${
+                                            kundaliData.dosha?.kaalSarp ? 'bg-red-500/20 text-red-500' : 'bg-emerald-500/20 text-emerald-500'
+                                        }`}>
+                                            {kundaliData.dosha?.kaalSarp ? (isHi ? 'उपस्थित' : 'Present') : (isHi ? 'मुक्त' : 'Absent')}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-textMuted leading-relaxed">
+                                        {kundaliData.dosha?.kaalSarpType || 'Planets are not hemmed between Rahu and Ketu.'}
+                                    </p>
+                                </div>
+
+                                {/* Sade Sati */}
+                                <div className={`glass-card p-5 rounded-2xl border-2 ${
+                                    kundaliData.sadeSati?.isUnderSadeSati ? 'border-amber-500/40 bg-amber-500/5' : 'border-emerald-500/40 bg-emerald-500/5'
+                                }`}>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h4 className="font-bold text-sm text-textMain">{t.sadeSatiTitle}</h4>
+                                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold ${
+                                            kundaliData.sadeSati?.isUnderSadeSati ? 'bg-amber-500/20 text-amber-500' : 'bg-emerald-500/20 text-emerald-500'
+                                        }`}>
+                                            {kundaliData.sadeSati?.isUnderSadeSati ? (isHi ? 'प्रभावाधीन' : 'Active') : (isHi ? 'मुक्त' : 'Free')}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-textMuted leading-relaxed">
+                                        {kundaliData.sadeSati?.status || 'Saturn transit is currently favorable.'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Remedies Box */}
+                            {kundaliData.dosha?.remedies && kundaliData.dosha.remedies.length > 0 && (
+                                <div className="glass-card p-5 rounded-2xl border border-primary/20 space-y-2">
+                                    <h4 className="text-xs font-bold text-primary flex items-center gap-1.5 uppercase tracking-wider">
+                                        <Flame size={14} />
+                                        {t.suggestedRemedies}
+                                    </h4>
+                                    <ul className="space-y-1.5 text-xs text-textMuted list-disc list-inside">
+                                        {kundaliData.dosha.remedies.map((rem, idx) => (
+                                            <li key={idx} className="leading-relaxed">{rem}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
+                            {/* Gemstones & Auspicious Factors */}
+                            {kundaliData.horoscope?.gemstones && (
+                                <div className="glass-card p-6 rounded-2xl border border-glassBorder/10 space-y-4">
+                                    <h4 className="text-sm font-bold text-textMain flex items-center gap-2 border-b border-glassBorder/10 pb-3">
+                                        <Gem size={16} className="text-primary" />
+                                        {t.gemstoneSection}
+                                    </h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                                        <div className="p-4 rounded-xl bg-surface/50 border border-glassBorder/15">
+                                            <span className="text-textMuted text-[10px] uppercase font-bold block">{t.lifeStone}</span>
+                                            <strong className="text-textMain text-sm mt-1 block">{kundaliData.horoscope.gemstones.life}</strong>
+                                        </div>
+                                        <div className="p-4 rounded-xl bg-surface/50 border border-glassBorder/15">
+                                            <span className="text-textMuted text-[10px] uppercase font-bold block">{t.luckyStone}</span>
+                                            <strong className="text-textMain text-sm mt-1 block">{kundaliData.horoscope.gemstones.lucky}</strong>
+                                        </div>
+                                        <div className="p-4 rounded-xl bg-surface/50 border border-glassBorder/15">
+                                            <span className="text-textMuted text-[10px] uppercase font-bold block">{t.beneficStone}</span>
+                                            <strong className="text-textMain text-sm mt-1 block">{kundaliData.horoscope.gemstones.benefic}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ========================================================================= */}
+                    {/* TRADITIONAL PRINTABLE 3-PAGE PATRIKA CONTAINER (HIDDEN ON WEB SCREEN)      */}
+                    {/* RETAINED FOR 100% HIGH FIDELITY HTML2CANVAS PDF DOWNLOAD AND PRINT         */}
+                    {/* ========================================================================= */}
+                    <div 
+                        ref={printRef} 
+                        className="fixed -left-[9999px] top-0 w-[794px] pointer-events-none opacity-0 print:opacity-100 print:static print:w-full print:pointer-events-auto patrika-container space-y-8 print:space-y-0"
+                    >
+                        {/* SHEET 1 */}
+                        <div
+                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] p-8 rounded-2xl shadow-xl overflow-hidden ${getBorderStyleClass()}`}
+                            style={{ fontFamily: '"Outfit", serif, sans-serif' }}
+                        >
+                            {renderWatermarkForSheet()}
+                            <div className="relative z-10">
+                                <div className="text-center pb-4 mb-4 border-b-2 border-[#B91C1C]/25">
+                                    <div className="text-2xl font-bold text-[#B91C1C] tracking-widest mb-0.5">
+                                        {t.omGanesh}
+                                    </div>
+                                    <div className="text-xl font-extrabold text-[#78350F] uppercase tracking-wider">
+                                        {t.janamPatrika}
+                                    </div>
+                                    <div className="mt-3 grid grid-cols-4 gap-2.5 bg-[#FEF3C7]/80 p-2.5 rounded-xl border border-[#F59E0B]/40 text-left text-xs">
+                                        <div>
+                                            <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.fullName}:</span>
+                                            <span className="font-bold text-[#1F2937] text-sm">{kundaliData.name}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.dateOfBirth}:</span>
+                                            <span className="font-semibold text-[#1F2937]">
+                                                {new Date(kundaliData.dob).toLocaleDateString(isHi ? 'hi-IN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.timeOfBirth}:</span>
+                                            <span className="font-semibold text-[#1F2937]">{kundaliData.tob}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.placeOfBirth}:</span>
+                                            <span className="font-semibold text-[#1F2937]">{kundaliData.place}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-4 gap-2 mb-4">
+                                    <div className="p-2 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200 text-center shadow-xs">
+                                        <div className="text-[9px] text-red-700 uppercase font-bold">{t.lagnaAscendant}</div>
+                                        <div className="text-base font-extrabold text-red-900 leading-tight">
+                                            {isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}
+                                        </div>
+                                    </div>
+                                    <div className="p-2 bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl border border-blue-200 text-center shadow-xs">
+                                        <div className="text-[9px] text-blue-700 uppercase font-bold">{t.chandraRashi}</div>
+                                        <div className="text-base font-extrabold text-blue-900 leading-tight">
+                                            {isHi ? kundaliData.rashiHi || kundaliData.rashi : kundaliData.rashi}
+                                        </div>
+                                    </div>
+                                    <div className="p-2 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-200 text-center shadow-xs">
+                                        <div className="text-[9px] text-amber-700 uppercase font-bold">{t.birthNakshatra}</div>
+                                        <div className="text-base font-extrabold text-amber-900 leading-tight">
+                                            {isHi ? kundaliData.nakshatraHi || kundaliData.nakshatra : kundaliData.nakshatra}
+                                        </div>
+                                    </div>
+                                    <div className="p-2 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 text-center shadow-xs">
+                                        <div className="text-[9px] text-emerald-700 uppercase font-bold">{t.namaakshar}</div>
+                                        <div className="text-xl font-black text-emerald-900 leading-tight">
+                                            {kundaliData.avakahada?.namaakshar || 'अ'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="p-3 bg-white rounded-xl border border-amber-300 flex justify-center">
+                                        <KundaliChart kundaliData={kundaliData} lang={lang} activeChartType="D1" showControls={false} size="compact" />
+                                    </div>
+                                    <div className="p-3 bg-white rounded-xl border border-amber-300 flex justify-center">
+                                        <KundaliChart kundaliData={kundaliData} lang={lang} activeChartType="D9" showControls={false} size="compact" />
+                                    </div>
+                                </div>
+
+                                <div className="overflow-x-auto rounded-lg border border-amber-200 bg-white">
+                                    <table className="w-full text-[10px] text-left">
+                                        <thead className="bg-[#FEF3C7] text-[#78350F] uppercase font-bold border-b border-amber-300">
+                                            <tr>
+                                                <th className="px-2 py-1.5">{t.planet}</th>
+                                                <th className="px-2 py-1.5">{t.sign}</th>
+                                                <th className="px-2 py-1.5">{t.degree}</th>
+                                                <th className="px-2 py-1.5">{t.house}</th>
+                                                <th className="px-2 py-1.5">{t.nakshatra}</th>
+                                                <th className="px-2 py-1.5">{t.dignity}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-amber-100">
+                                            {kundaliData.planets?.map((p) => (
+                                                <tr key={p.name}>
+                                                    <td className="px-2 py-1 font-bold text-gray-900">{isHi ? `${p.hindi}` : `${p.name}`}</td>
+                                                    <td className="px-2 py-1">{isHi ? p.signHi || p.sign : p.sign}</td>
+                                                    <td className="px-2 py-1 font-mono">{p.dms || `${p.degree?.toFixed(2)}°`}</td>
+                                                    <td className="px-2 py-1 font-bold text-amber-950">{p.house}</td>
+                                                    <td className="px-2 py-1">{isHi ? p.nakshatraHi || p.nakshatra : p.nakshatra}</td>
+                                                    <td className="px-2 py-1">{isHi ? p.dignity || 'सम' : p.dignityEn || 'Neutral'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div className="mt-4 pt-2 border-t border-amber-200/80 flex justify-between items-center text-[10px] text-gray-500">
+                                    <span>{kundaliData.name} • Janam Patrika</span>
+                                    <span className="font-bold text-[#B91C1C]">{isHi ? '॥ पृष्ठ १/३ ॥' : 'Page 1 of 3'}</span>
+                                    <span>Astrolite</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SHEET 2 */}
+                        <div
+                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] p-8 rounded-2xl shadow-xl overflow-hidden ${getBorderStyleClass()}`}
+                            style={{ fontFamily: '"Outfit", serif, sans-serif' }}
+                        >
+                            {renderWatermarkForSheet()}
+                            <div className="relative z-10">
+                                <div className="text-center pb-3 mb-4 border-b-2 border-[#B91C1C]/25">
+                                    <div className="text-base font-extrabold text-[#78350F] uppercase tracking-wider">
+                                        {isHi ? '॥ द्वादश भाव विस्तृत फलादेश एवं सर्वाष्टकवर्ग ॥' : '12 Houses & Ashtakavarga'}
+                                    </div>
+                                </div>
+
+                                {kundaliData.bhavaphala && (
+                                    <div className="grid grid-cols-2 gap-2 text-[10px] mb-4">
+                                        {kundaliData.bhavaphala.map((b) => (
+                                            <div key={b.houseNum} className="p-2 bg-white rounded border border-amber-200">
+                                                <div className="font-bold text-[#78350F]">{isHi ? b.nameHi : b.nameEn} ({b.lord})</div>
+                                                <div className="text-gray-700">{isHi ? b.lordPlacement : b.lordPlacementEn}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="mt-4 pt-2 border-t border-amber-200/80 flex justify-between items-center text-[10px] text-gray-500">
+                                    <span>{kundaliData.name} • Bhavaphala</span>
+                                    <span className="font-bold text-[#B91C1C]">{isHi ? '॥ पृष्ठ २/३ ॥' : 'Page 2 of 3'}</span>
+                                    <span>Astrolite</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SHEET 3 */}
+                        <div
+                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] p-8 rounded-2xl shadow-xl overflow-hidden ${getBorderStyleClass()}`}
+                            style={{ fontFamily: '"Outfit", serif, sans-serif' }}
+                        >
+                            {renderWatermarkForSheet()}
+                            <div className="relative z-10">
+                                <div className="text-center pb-3 mb-4 border-b-2 border-[#B91C1C]/25">
+                                    <div className="text-base font-extrabold text-[#78350F] uppercase tracking-wider">
+                                        {isHi ? '॥ विंशोत्तरी महादशा, दोष विचार एवं रत्न सुझाव ॥' : 'Dasha, Dosha & Gemstones'}
+                                    </div>
+                                </div>
+
+                                {kundaliData.dashas && (
+                                    <div className="mb-4">
+                                        <table className="w-full text-[10px] text-left border border-amber-200 bg-white">
+                                            <thead className="bg-[#FEF3C7] text-[#78350F] font-bold">
+                                                <tr>
+                                                    <th className="p-1">{t.mahadasha}</th>
+                                                    <th className="p-1">{t.startDate}</th>
+                                                    <th className="p-1">{t.endDate}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {kundaliData.dashas.periods?.slice(0, 6).map((d, i) => (
+                                                    <tr key={i} className="border-t border-amber-100">
+                                                        <td className="p-1 font-semibold">{isHi ? d.hindi : d.lord}</td>
+                                                        <td className="p-1 font-mono">{d.startDate}</td>
+                                                        <td className="p-1 font-mono">{d.endDate}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                <div className="text-center pt-3 mt-3 border-t-2 border-[#B91C1C]/25 text-xs text-[#78350F]">
+                                    <div className="font-bold text-sm tracking-wider">॥ शुभं भवतु • कल्याणमस्तु ॥</div>
+                                    {userSettings.astrologerName && (
+                                        <div className="mt-1 text-gray-800 font-semibold text-[11px]">
+                                            {userSettings.astrologerName}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-3 pt-1 border-t border-amber-200/80 flex justify-between items-center text-[10px] text-gray-500">
+                                    <span>{kundaliData.name} • Dasha & Dosha</span>
+                                    <span className="font-bold text-[#B91C1C]">{isHi ? '॥ पृष्ठ ३/३ ॥' : 'Page 3 of 3'}</span>
+                                    <span>Astrolite</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
