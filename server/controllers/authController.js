@@ -41,6 +41,7 @@ exports.registerUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
+                token
             });
         } else {
             res.status(400).json({ message: 'Invalid user data' });
@@ -73,6 +74,7 @@ exports.loginUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
+                token
             });
         } else {
             res.status(401).json({ message: 'Invalid email or password' });

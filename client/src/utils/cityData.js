@@ -1,0 +1,60 @@
+// Major Indian and World cities with precise Latitude, Longitude, and Timezone
+export const MAJOR_CITIES = [
+    { name: 'New Delhi, India', lat: 28.6139, lon: 77.2090, timezone: 5.5 },
+    { name: 'Mumbai, Maharashtra', lat: 19.0760, lon: 72.8777, timezone: 5.5 },
+    { name: 'Bengaluru, Karnataka', lat: 12.9716, lon: 77.5946, timezone: 5.5 },
+    { name: 'Kolkata, West Bengal', lat: 22.5726, lon: 88.3639, timezone: 5.5 },
+    { name: 'Chennai, Tamil Nadu', lat: 13.0827, lon: 80.2707, timezone: 5.5 },
+    { name: 'Hyderabad, Telangana', lat: 17.3850, lon: 78.4867, timezone: 5.5 },
+    { name: 'Ahmedabad, Gujarat', lat: 23.0225, lon: 72.5714, timezone: 5.5 },
+    { name: 'Pune, Maharashtra', lat: 18.5204, lon: 73.8567, timezone: 5.5 },
+    { name: 'Jaipur, Rajasthan', lat: 26.9124, lon: 75.7873, timezone: 5.5 },
+    { name: 'Varanasi, Uttar Pradesh', lat: 25.3176, lon: 82.9739, timezone: 5.5 },
+    { name: 'Lucknow, Uttar Pradesh', lat: 26.8467, lon: 80.9462, timezone: 5.5 },
+    { name: 'Kanpur, Uttar Pradesh', lat: 26.4499, lon: 80.3319, timezone: 5.5 },
+    { name: 'Patna, Bihar', lat: 25.5941, lon: 85.1376, timezone: 5.5 },
+    { name: 'Bhopal, Madhya Pradesh', lat: 23.2599, lon: 77.4126, timezone: 5.5 },
+    { name: 'Indore, Madhya Pradesh', lat: 22.7196, lon: 75.8577, timezone: 5.5 },
+    { name: 'Nagpur, Maharashtra', lat: 21.1458, lon: 79.0882, timezone: 5.5 },
+    { name: 'Chandigarh, Punjab/Haryana', lat: 30.7333, lon: 76.7794, timezone: 5.5 },
+    { name: 'Amritsar, Punjab', lat: 31.6340, lon: 74.8723, timezone: 5.5 },
+    { name: 'Surat, Gujarat', lat: 21.1702, lon: 72.8311, timezone: 5.5 },
+    { name: 'Vadodara, Gujarat', lat: 22.3072, lon: 73.1812, timezone: 5.5 },
+    { name: 'Dehradun, Uttarakhand', lat: 30.3165, lon: 78.0322, timezone: 5.5 },
+    { name: 'Haridwar, Uttarakhand', lat: 29.9457, lon: 78.1642, timezone: 5.5 },
+    { name: 'Ranchi, Jharkhand', lat: 23.3441, lon: 85.3096, timezone: 5.5 },
+    { name: 'Raipur, Chhattisgarh', lat: 21.2514, lon: 81.6296, timezone: 5.5 },
+    { name: 'Bhubaneswar, Odisha', lat: 20.2961, lon: 85.8245, timezone: 5.5 },
+    { name: 'Guwahati, Assam', lat: 26.1445, lon: 91.7362, timezone: 5.5 },
+    { name: 'Srinagar, Jammu & Kashmir', lat: 34.0837, lon: 74.7973, timezone: 5.5 },
+    { name: 'Jammu, Jammu & Kashmir', lat: 32.7266, lon: 74.8570, timezone: 5.5 },
+    { name: 'Shimla, Himachal Pradesh', lat: 31.1048, lon: 77.1734, timezone: 5.5 },
+    { name: 'Ujjain, Madhya Pradesh', lat: 23.1765, lon: 75.7885, timezone: 5.5 },
+    { name: 'Ayodhya, Uttar Pradesh', lat: 26.7922, lon: 82.1998, timezone: 5.5 },
+    { name: 'Mathura, Uttar Pradesh', lat: 27.4924, lon: 77.6737, timezone: 5.5 },
+    { name: 'Prayagraj (Allahabad), UP', lat: 25.4358, lon: 81.8463, timezone: 5.5 },
+    { name: 'Agra, Uttar Pradesh', lat: 27.1767, lon: 78.0081, timezone: 5.5 },
+    { name: 'Nashik, Maharashtra', lat: 19.9975, lon: 73.7898, timezone: 5.5 },
+    { name: 'Thiruvananthapuram, Kerala', lat: 8.5241, lon: 76.9366, timezone: 5.5 },
+    { name: 'Kochi, Kerala', lat: 9.9312, lon: 76.2673, timezone: 5.5 },
+    { name: 'Coimbatore, Tamil Nadu', lat: 11.0168, lon: 76.9558, timezone: 5.5 },
+    { name: 'Madurai, Tamil Nadu', lat: 9.9252, lon: 78.1198, timezone: 5.5 },
+    { name: 'Visakhapatnam, Andhra Pradesh', lat: 17.6868, lon: 83.2185, timezone: 5.5 },
+    { name: 'Vijayawada, Andhra Pradesh', lat: 16.5062, lon: 80.6480, timezone: 5.5 },
+    { name: 'Goa (Panaji)', lat: 15.4909, lon: 73.8278, timezone: 5.5 },
+    // International
+    { name: 'Kathmandu, Nepal', lat: 27.7172, lon: 85.3240, timezone: 5.75 },
+    { name: 'London, UK', lat: 51.5074, lon: -0.1278, timezone: 0.0 },
+    { name: 'New York, USA', lat: 40.7128, lon: -74.0060, timezone: -5.0 },
+    { name: 'San Francisco, USA', lat: 37.7749, lon: -122.4194, timezone: -8.0 },
+    { name: 'Toronto, Canada', lat: 43.6532, lon: -79.3832, timezone: -5.0 },
+    { name: 'Dubai, UAE', lat: 25.2048, lon: 55.2708, timezone: 4.0 },
+    { name: 'Singapore', lat: 1.3521, lon: 103.8198, timezone: 8.0 },
+    { name: 'Sydney, Australia', lat: -33.8688, lon: 151.2093, timezone: 10.0 }
+];
+
+export const findCity = (query) => {
+    if (!query || typeof query !== 'string') return null;
+    const clean = query.trim().toLowerCase();
+    return MAJOR_CITIES.find(c => c.name.toLowerCase().includes(clean)) || null;
+};

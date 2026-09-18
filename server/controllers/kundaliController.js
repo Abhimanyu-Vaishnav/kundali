@@ -1,88 +1,28 @@
 const Kundali = require('../models/Kundali');
-
-// Helper to simulate planetary positions
-const calculatePlanets = (dob, tob, lat, lon) => {
-    // This is a SIMULATION for demonstration purposes
-    const signs = [
-        'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
-        'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
-    ];
-
-    const nakshatras = [
-        'Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra',
-        'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni',
-        'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha',
-        'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha',
-        'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'
-    ];
-
-    const planetsList = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
-
-    const seed = new Date(dob).getTime();
-
-    const planets = planetsList.map((planet, index) => {
-        const randomVal = (seed + index * 12345) % 360;
-        const signIndex = Math.floor(randomVal / 30);
-        const degree = randomVal % 30;
-        const house = (Math.floor(Math.random() * 12) + 1);
-
-        return {
-            name: planet,
-            degree: parseFloat(degree.toFixed(2)),
-            sign: signs[signIndex],
-            signId: signIndex + 1,
-            nakshatra: nakshatras[Math.floor(randomVal / 13.33) % 27],
-            house: house,
-            isRetrograde: Math.random() > 0.8
-        };
-    });
-
-    const lagnaVal = (seed + 9999) % 360;
-    const lagnaSignIndex = Math.floor(lagnaVal / 30);
-
-    return {
-        lagna: {
-            sign: signs[lagnaSignIndex],
-            signId: lagnaSignIndex + 1,
-            degree: parseFloat((lagnaVal % 30).toFixed(2))
-        },
-        planets,
-        rashi: planets.find(p => p.name === 'Moon').sign,
-        nakshatra: planets.find(p => p.name === 'Moon').nakshatra
-    };
-};
+const { calculateVedicBirthChart } = require('../utils/vedicAstro');
 
 // @desc    Generate and Save Kundali
 // @route   POST /api/kundali
 // @access  Private
 exports.createKundali = async (req, res) => {
     try {
-        const { name, gender, dob, tob, place, lat, lon, timezone } = req.body;
+        let { name, gender, dob, tob, place, lat, lon, timezone } = req.body;
 
-        // Calculate chart data
-        const chartData = calculatePlanets(dob, tob, lat, lon);
+        // Sanitize string inputs to eliminate whitespace sensitivity
+        name = (name || '').trim();
+        gender = (gender || 'male').trim().toLowerCase();
+        dob = (dob || '').trim();
+        tob = (tob || '').trim();
+        place = (place || '').trim();
+        lat = parseFloat(lat) || 28.6139;
+        lon = parseFloat(lon) || 77.2090;
+        timezone = parseFloat(timezone) || 5.5;
 
-        // Calculate Dosha (Simulated)
-        const dosha = {
-            manglik: Math.random() > 0.7,
-            kaalSarp: Math.random() > 0.9,
-            remedies: []
-        };
-
-        if (dosha.manglik) {
-            dosha.remedies.push('Perform Mangal Shanti Puja.');
-            dosha.remedies.push('Chant Hanuman Chalisa every Tuesday.');
-        }
-        if (dosha.kaalSarp) {
-            dosha.remedies.push('Perform Rudrabhishek.');
-            dosha.remedies.push('Offer water to Shivling daily.');
-        }
-        if (!dosha.manglik && !dosha.kaalSarp) {
-            dosha.remedies.push('Chant Gayatri Mantra for general well-being.');
-        }
+        // Calculate 100% accurate astronomical Vedic chart data
+        const chartData = calculateVedicBirthChart(dob, tob, lat, lon, timezone);
 
         const kundali = await Kundali.create({
-            userId: req.user.id, // Sequelize uses userId by default for associations
+            userId: req.user.id,
             name,
             gender,
             dob,
@@ -91,14 +31,34 @@ exports.createKundali = async (req, res) => {
             lat,
             lon,
             timezone,
-            ...chartData,
-            dosha // Will be stringified by model setter
+            lagna: chartData.lagna,
+            planets: chartData.planets,
+            rashi: chartData.rashi,
+            rashiHi: chartData.rashiHi,
+            nakshatra: chartData.nakshatra,
+            nakshatraHi: chartData.nakshatraHi,
+            pada: chartData.pada,
+            dosha: chartData.dosha,
+            navamsha: {
+                navamshaLagna: chartData.navamshaLagna,
+                navamshaPlanets: chartData.navamshaPlanets
+            },
+            panchang: chartData.panchang,
+            avakahada: chartData.avakahada,
+            dashas: chartData.dashas,
+            horoscope: chartData.horoscope,
+            ayanamsha: chartData.ayanamsha,
+            divisionalCharts: chartData.divisionalCharts,
+            bhavaphala: chartData.bhavaphala,
+            ashtakvarga: chartData.ashtakvarga,
+            sadeSati: chartData.sadeSati
         });
 
-        // The model getter will parse JSON strings back to objects
+        // The model getters will parse JSON strings back to objects
         res.status(201).json(kundali);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error generating Kundali:', error);
+        res.status(500).json({ message: error.message || 'Failed to generate Kundali' });
     }
 };
 

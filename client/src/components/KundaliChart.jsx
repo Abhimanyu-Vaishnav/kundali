@@ -1,145 +1,379 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { toDevnagariNum } from '../utils/translations';
 
-const KundaliChart = ({ kundaliData }) => {
+const KundaliChart = ({
+    kundaliData,
+    lang = 'hi',
+    activeChartType = 'D1',
+    showControls = true,
+    size = 'normal',
+    customTitle = null,
+    watermarkType = 'om'
+}) => {
+    const [chartType, setChartType] = useState(activeChartType);
+
     if (!kundaliData) return null;
 
-    // North Indian chart houses (diamond layout)
-    // House positions in the diamond
-    const housePositions = {
-        1: { top: '0%', left: '50%', transform: 'translate(-50%, 0)' },
-        2: { top: '16.66%', left: '75%', transform: 'translate(-50%, -50%)' },
-        3: { top: '33.33%', left: '87.5%', transform: 'translate(-50%, -50%)' },
-        4: { top: '50%', left: '100%', transform: 'translate(-100%, -50%)' },
-        5: { top: '66.66%', left: '87.5%', transform: 'translate(-50%, -50%)' },
-        6: { top: '83.33%', left: '75%', transform: 'translate(-50%, -50%)' },
-        7: { top: '100%', left: '50%', transform: 'translate(-50%, -100%)' },
-        8: { top: '83.33%', left: '25%', transform: 'translate(-50%, -50%)' },
-        9: { top: '66.66%', left: '12.5%', transform: 'translate(-50%, -50%)' },
-        10: { top: '50%', left: '0%', transform: 'translate(0, -50%)' },
-        11: { top: '33.33%', left: '12.5%', transform: 'translate(-50%, -50%)' },
-        12: { top: '16.66%', left: '25%', transform: 'translate(-50%, -50%)' }
-    };
+    // Use selected chart type if controls enabled, else activeChartType prop
+    const currentType = (showControls ? chartType : activeChartType).toUpperCase();
 
-    // Group planets by house
-    const planetsByHouse = {};
-    kundaliData.planets.forEach(planet => {
-        const house = planet.house;
-        if (!planetsByHouse[house]) {
-            planetsByHouse[house] = [];
+    // Extract lagna and planets based on chart type
+    let lagnaSignId = 1;
+    let planetsList = [];
+
+    const divs = kundaliData.divisionalCharts || {};
+
+    if (currentType === 'D9') {
+        if (divs.d9) {
+            lagnaSignId = divs.d9.lagna?.signId || 1;
+            planetsList = divs.d9.planets.map(p => ({
+                ...p,
+                activeHouse: p.divHouse || p.house
+            }));
+        } else if (kundaliData.navamsha) {
+            lagnaSignId = kundaliData.navamsha.navamshaLagna?.signId || 1;
+            planetsList = (kundaliData.navamsha.navamshaPlanets || []).map(p => ({
+                ...p,
+                activeHouse: p.navamshaHouse || p.house
+            }));
         }
-        planetsByHouse[house].push(planet);
-    });
-
-    // Add Lagna to house 1
-    if (!planetsByHouse[1]) {
-        planetsByHouse[1] = [];
+    } else if (currentType === 'D10' && divs.d10) {
+        lagnaSignId = divs.d10.lagna?.signId || 1;
+        planetsList = divs.d10.planets.map(p => ({
+            ...p,
+            activeHouse: p.divHouse || p.house
+        }));
+    } else if (currentType === 'D7' && divs.d7) {
+        lagnaSignId = divs.d7.lagna?.signId || 1;
+        planetsList = divs.d7.planets.map(p => ({
+            ...p,
+            activeHouse: p.divHouse || p.house
+        }));
+    } else if (currentType === 'D2' && divs.d2) {
+        lagnaSignId = divs.d2.lagna?.signId || 1;
+        planetsList = divs.d2.planets.map(p => ({
+            ...p,
+            activeHouse: p.divHouse || p.house
+        }));
+    } else if (currentType === 'D3' && divs.d3) {
+        lagnaSignId = divs.d3.lagna?.signId || 1;
+        planetsList = divs.d3.planets.map(p => ({
+            ...p,
+            activeHouse: p.divHouse || p.house
+        }));
+    } else if (currentType === 'MOON') {
+        const moon = kundaliData.planets?.find(p => p.name === 'Moon');
+        lagnaSignId = moon ? moon.signId : 1;
+        planetsList = (kundaliData.planets || []).map(p => {
+            const moonHouse = ((p.signId - lagnaSignId + 12) % 12) + 1;
+            return {
+                ...p,
+                activeHouse: moonHouse
+            };
+        });
+    } else {
+        // D1 Lagna Chart
+        lagnaSignId = kundaliData.lagna?.signId || 1;
+        planetsList = (kundaliData.planets || []).map(p => ({
+            ...p,
+            activeHouse: p.house
+        }));
     }
 
-    // Planet symbols
-    const planetSymbols = {
-        'Sun': '☉',
-        'Moon': '☽',
-        'Mars': '♂',
-        'Mercury': '☿',
-        'Jupiter': '♃',
-        'Venus': '♀',
-        'Saturn': '♄',
-        'Rahu': '☊',
-        'Ketu': '☋'
+    // Group planets by house (1 to 12)
+    const planetsByHouse = {};
+    for (let i = 1; i <= 12; i++) {
+        planetsByHouse[i] = [];
+    }
+
+    planetsList.forEach(planet => {
+        const h = planet.activeHouse || planet.house || 1;
+        if (planetsByHouse[h]) {
+            planetsByHouse[h].push(planet);
+        }
+    });
+
+    // Calculate Rashi Number for each house (1 to 12)
+    const getRashiForHouse = (houseNum) => {
+        return ((lagnaSignId + houseNum - 2) % 12) + 1;
+    };
+
+    // Traditional geometric centers and Rashi label positions for 12 houses (ViewBox: 0 0 400 400)
+    const houseCoordinates = {
+        1: {
+            rashi: { x: 200, y: 175 },
+            planetsStart: { x: 200, y: 95 }
+        },
+        2: {
+            rashi: { x: 255, y: 70 },
+            planetsStart: { x: 300, y: 45 }
+        },
+        3: {
+            rashi: { x: 330, y: 145 },
+            planetsStart: { x: 355, y: 105 }
+        },
+        4: {
+            rashi: { x: 225, y: 200 },
+            planetsStart: { x: 305, y: 200 }
+        },
+        5: {
+            rashi: { x: 330, y: 255 },
+            planetsStart: { x: 355, y: 295 }
+        },
+        6: {
+            rashi: { x: 255, y: 330 },
+            planetsStart: { x: 300, y: 355 }
+        },
+        7: {
+            rashi: { x: 200, y: 225 },
+            planetsStart: { x: 200, y: 305 }
+        },
+        8: {
+            rashi: { x: 145, y: 330 },
+            planetsStart: { x: 100, y: 355 }
+        },
+        9: {
+            rashi: { x: 70, y: 255 },
+            planetsStart: { x: 45, y: 295 }
+        },
+        10: {
+            rashi: { x: 175, y: 200 },
+            planetsStart: { x: 95, y: 200 }
+        },
+        11: {
+            rashi: { x: 70, y: 145 },
+            planetsStart: { x: 45, y: 105 }
+        },
+        12: {
+            rashi: { x: 145, y: 70 },
+            planetsStart: { x: 100, y: 45 }
+        }
+    };
+
+    // Traditional Planet Symbols / Abbreviations
+    const getPlanetLabel = (planet) => {
+        const isHi = lang === 'hi';
+        const abbr = isHi ? (planet.abbrHi || planet.hindi?.slice(0, 2) || 'ग्रह') : (planet.abbrEn || planet.name?.slice(0, 2));
+        const retro = planet.isRetrograde ? (isHi ? ' (व)' : ' (R)') : '';
+        return `${abbr}${retro}`;
+    };
+
+    const isCompact = size === 'compact';
+
+    // Central watermark symbol
+    let centerSymbol = 'ॐ';
+    if (watermarkType === 'shree') centerSymbol = 'श्री';
+    else if (watermarkType === 'swastik') centerSymbol = '卐';
+    else if (watermarkType === 'ganesha') centerSymbol = '卐';
+    else if (watermarkType === 'mandala') centerSymbol = '☸';
+
+    // Chart title text
+    const getChartTitle = () => {
+        if (customTitle) return customTitle;
+        if (currentType === 'D1') return lang === 'hi' ? 'लग्न कुण्डली (Lagna - D1)' : 'Lagna Chart (D1)';
+        if (currentType === 'D9') return lang === 'hi' ? 'नवमांश कुण्डली (Navamsha - D9)' : 'Navamsha Chart (D9)';
+        if (currentType === 'D10') return lang === 'hi' ? 'दशमांश - आजीविका (D10)' : 'Dashamsha - Career (D10)';
+        if (currentType === 'D7') return lang === 'hi' ? 'सप्तमांश - संतान (D7)' : 'Saptamsha - Children (D7)';
+        if (currentType === 'D2') return lang === 'hi' ? 'होरा - धन संपदा (D2)' : 'Hora - Wealth (D2)';
+        if (currentType === 'D3') return lang === 'hi' ? 'द्रेष्काण - पराक्रम (D3)' : 'Drekkana - Siblings (D3)';
+        if (currentType === 'MOON') return lang === 'hi' ? 'चन्द्र कुण्डली (Moon Chart)' : 'Chandra Kundali';
+        return currentType;
     };
 
     return (
-        <div className="w-full max-w-2xl mx-auto">
-            {/* Chart Container */}
-            <div className="relative w-full aspect-square">
-                {/* SVG Diamond Chart */}
-                <svg viewBox="0 0 400 400" className="w-full h-full">
-                    {/* Outer Diamond */}
-                    <polygon
-                        points="200,20 380,200 200,380 20,200"
+        <div className="w-full flex flex-col items-center">
+            {/* Chart Type Tabs */}
+            {showControls && (
+                <div className="flex flex-wrap justify-center gap-1.5 mb-3 p-1.5 bg-surface/80 rounded-xl border border-glassBorder/20 print:hidden">
+                    {[
+                        { id: 'D1', labelHi: 'लग्न (D1)', labelEn: 'Lagna (D1)' },
+                        { id: 'D9', labelHi: 'नवमांश (D9)', labelEn: 'Navamsha (D9)' },
+                        { id: 'MOON', labelHi: 'चन्द्र', labelEn: 'Moon' },
+                        { id: 'D10', labelHi: 'दशमांश (D10)', labelEn: 'Career (D10)' },
+                        { id: 'D7', labelHi: 'सप्तमांश (D7)', labelEn: 'Children (D7)' },
+                        { id: 'D2', labelHi: 'होरा (D2)', labelEn: 'Wealth (D2)' },
+                        { id: 'D3', labelHi: 'द्रेष्काण (D3)', labelEn: 'Siblings (D3)' }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setChartType(tab.id)}
+                            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                currentType === tab.id
+                                    ? 'bg-amber-600 text-white shadow-sm'
+                                    : 'text-textMuted hover:text-textMain'
+                            }`}
+                        >
+                            {lang === 'hi' ? tab.labelHi : tab.labelEn}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Title above chart */}
+            <div className="text-center mb-1.5">
+                <h4 className="font-bold text-sm md:text-base text-red-900 tracking-wide">
+                    {getChartTitle()}
+                </h4>
+            </div>
+
+            {/* Sacred Vedic North Indian Diamond Chart SVG */}
+            <div className={`relative w-full ${isCompact ? 'max-w-[280px]' : 'max-w-md md:max-w-[420px]'} aspect-square drop-shadow-md`}>
+                <svg
+                    viewBox="0 0 400 400"
+                    className="w-full h-full bg-[#FFFBF0] rounded-xl border-4 border-[#B91C1C] shadow-inner"
+                    style={{ fontFeatureSettings: '"tnum"' }}
+                >
+                    {/* Background Pattern / Watermark effect */}
+                    <rect x="0" y="0" width="400" height="400" fill="#FFFDF5" />
+
+                    {/* Inner Decorative Border */}
+                    <rect
+                        x="6"
+                        y="6"
+                        width="388"
+                        height="388"
                         fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="text-textMain"
+                        stroke="#D97706"
+                        strokeWidth="1"
+                        strokeDasharray="4 2"
                     />
 
-                    {/* Inner Cross Lines */}
-                    <line x1="200" y1="20" x2="200" y2="380" stroke="currentColor" strokeWidth="1" className="text-textMuted" />
-                    <line x1="20" y1="200" x2="380" y2="200" stroke="currentColor" strokeWidth="1" className="text-textMuted" />
+                    {/* Outer Square */}
+                    <rect
+                        x="10"
+                        y="10"
+                        width="380"
+                        height="380"
+                        fill="none"
+                        stroke="#B91C1C"
+                        strokeWidth="2.5"
+                    />
 
-                    {/* Diagonal Lines */}
-                    <line x1="110" y1="110" x2="290" y2="290" stroke="currentColor" strokeWidth="1" className="text-textMuted" />
-                    <line x1="290" y1="110" x2="110" y2="290" stroke="currentColor" strokeWidth="1" className="text-textMuted" />
+                    {/* Outer Diagonals */}
+                    <line x1="10" y1="10" x2="390" y2="390" stroke="#B91C1C" strokeWidth="2" />
+                    <line x1="390" y1="10" x2="10" y2="390" stroke="#B91C1C" strokeWidth="2" />
 
-                    {/* House Numbers */}
-                    <text x="200" y="40" textAnchor="middle" className="text-xs fill-textMuted font-semibold">1</text>
-                    <text x="310" y="130" textAnchor="middle" className="text-xs fill-textMuted font-semibold">2</text>
-                    <text x="340" y="180" textAnchor="middle" className="text-xs fill-textMuted font-semibold">3</text>
-                    <text x="360" y="205" textAnchor="middle" className="text-xs fill-textMuted font-semibold">4</text>
-                    <text x="340" y="230" textAnchor="middle" className="text-xs fill-textMuted font-semibold">5</text>
-                    <text x="310" y="280" textAnchor="middle" className="text-xs fill-textMuted font-semibold">6</text>
-                    <text x="200" y="370" textAnchor="middle" className="text-xs fill-textMuted font-semibold">7</text>
-                    <text x="90" y="280" textAnchor="middle" className="text-xs fill-textMuted font-semibold">8</text>
-                    <text x="60" y="230" textAnchor="middle" className="text-xs fill-textMuted font-semibold">9</text>
-                    <text x="40" y="205" textAnchor="middle" className="text-xs fill-textMuted font-semibold">10</text>
-                    <text x="60" y="180" textAnchor="middle" className="text-xs fill-textMuted font-semibold">11</text>
-                    <text x="90" y="130" textAnchor="middle" className="text-xs fill-textMuted font-semibold">12</text>
+                    {/* Inner Midpoint Diamond */}
+                    <polygon
+                        points="200,10 390,200 200,390 10,200"
+                        fill="none"
+                        stroke="#B91C1C"
+                        strokeWidth="2.5"
+                    />
 
-                    {/* Planets in Houses */}
-                    {Object.entries(planetsByHouse).map(([house, planets]) => {
-                        const houseNum = parseInt(house);
-                        let x, y;
-
-                        // Calculate position for each house
-                        switch (houseNum) {
-                            case 1: x = 200; y = 70; break;
-                            case 2: x = 280; y = 110; break;
-                            case 3: x = 320; y = 160; break;
-                            case 4: x = 330; y = 200; break;
-                            case 5: x = 320; y = 240; break;
-                            case 6: x = 280; y = 290; break;
-                            case 7: x = 200; y = 330; break;
-                            case 8: x = 120; y = 290; break;
-                            case 9: x = 80; y = 240; break;
-                            case 10: x = 70; y = 200; break;
-                            case 11: x = 80; y = 160; break;
-                            case 12: x = 120; y = 110; break;
-                            default: x = 200; y = 200;
-                        }
+                    {/* Render House Numbers (Rashi Numbers in Houses) & Planets */}
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(houseNum => {
+                        const rashiNum = getRashiForHouse(houseNum);
+                        const rashiDisplay = lang === 'hi' ? toDevnagariNum(rashiNum) : rashiNum;
+                        const coords = houseCoordinates[houseNum];
+                        const housePlanets = planetsByHouse[houseNum] || [];
 
                         return (
-                            <g key={house}>
+                            <g key={houseNum}>
+                                {/* Traditional Rashi Number in House */}
+                                <text
+                                    x={coords.rashi.x}
+                                    y={coords.rashi.y}
+                                    textAnchor="middle"
+                                    dominantBaseline="central"
+                                    className="font-bold fill-[#B45309]"
+                                    style={{ fontSize: '13px', fontFamily: 'serif' }}
+                                >
+                                    {rashiDisplay}
+                                </text>
+
+                                {/* Planets In This House */}
+                                {housePlanets.map((planet, pIdx) => {
+                                    const count = housePlanets.length;
+                                    let offsetX = 0;
+                                    let offsetY = 0;
+
+                                    if (count === 1) {
+                                        offsetY = 0;
+                                    } else if (count === 2) {
+                                        offsetY = (pIdx === 0 ? -9 : 9);
+                                    } else if (count === 3) {
+                                        offsetY = (pIdx - 1) * 14;
+                                    } else if (count === 4) {
+                                        offsetX = (pIdx % 2 === 0 ? -16 : 16);
+                                        offsetY = (pIdx < 2 ? -8 : 8);
+                                    } else {
+                                        offsetX = (pIdx % 2 === 0 ? -18 : 18);
+                                        offsetY = (Math.floor(pIdx / 2) - 1) * 12;
+                                    }
+
+                                    return (
+                                        <g key={planet.name || pIdx}>
+                                            <text
+                                                x={coords.planetsStart.x + offsetX}
+                                                y={coords.planetsStart.y + offsetY}
+                                                textAnchor="middle"
+                                                dominantBaseline="central"
+                                                className={`font-bold ${
+                                                    planet.name === 'Sun' ? 'fill-[#C2410C]' :
+                                                    planet.name === 'Moon' ? 'fill-[#0284C7]' :
+                                                    planet.name === 'Mars' ? 'fill-[#DC2626]' :
+                                                    planet.name === 'Mercury' ? 'fill-[#15803D]' :
+                                                    planet.name === 'Jupiter' ? 'fill-[#A16207]' :
+                                                    planet.name === 'Venus' ? 'fill-[#BE185D]' :
+                                                    planet.name === 'Saturn' ? 'fill-[#4338CA]' :
+                                                    planet.name === 'Rahu' || planet.name === 'Ketu' ? 'fill-[#6B21A8]' :
+                                                    'fill-[#1F2937]'
+                                                }`}
+                                                style={{ fontSize: count > 3 ? '11px' : '12.5px', fontFamily: 'sans-serif' }}
+                                            >
+                                                {getPlanetLabel(planet)}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+
+                                {/* Lagna Indicator in House 1 */}
                                 {houseNum === 1 && (
-                                    <text x={x} y={y - 10} textAnchor="middle" className="text-xs fill-accent font-bold">
-                                        Lg
+                                    <text
+                                        x={coords.planetsStart.x}
+                                        y={coords.planetsStart.y - (housePlanets.length > 0 ? 18 : 0)}
+                                        textAnchor="middle"
+                                        dominantBaseline="central"
+                                        className="font-extrabold fill-[#991B1B]"
+                                        style={{ fontSize: '11px' }}
+                                    >
+                                        {lang === 'hi' ? 'लग्न' : 'Asc'}
                                     </text>
                                 )}
-                                {planets.map((planet, idx) => (
-                                    <text
-                                        key={planet.name}
-                                        x={x}
-                                        y={y + (idx * 15) + (houseNum === 1 ? 5 : 0)}
-                                        textAnchor="middle"
-                                        className="text-sm fill-textMain font-medium"
-                                    >
-                                        {planetSymbols[planet.name] || planet.name.substring(0, 2)}
-                                        {planet.isRetrograde && <tspan className="text-xs fill-red-400">R</tspan>}
-                                    </text>
-                                ))}
                             </g>
                         );
                     })}
+
+                    {/* Central Watermark Symbol */}
+                    <text
+                        x="200"
+                        y="204"
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        className="fill-[#F59E0B]/25 select-none pointer-events-none font-bold"
+                        style={{ fontSize: '32px' }}
+                    >
+                        {centerSymbol}
+                    </text>
                 </svg>
             </div>
 
-            {/* Chart Legend */}
-            <div className="mt-6 grid grid-cols-3 gap-4 text-sm">
-                {Object.entries(planetSymbols).map(([name, symbol]) => (
-                    <div key={name} className="flex items-center gap-2">
-                        <span className="text-lg">{symbol}</span>
-                        <span className="text-textMuted">{name}</span>
-                    </div>
-                ))}
+            {/* Pandit-style Traditional Abbreviations Legend */}
+            <div className="mt-3 p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-amber-950 w-full max-w-md">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1 text-center font-medium text-[11px]">
+                    <div><span className="font-bold text-red-700">{lang === 'hi' ? 'सू' : 'Su'}</span>: {lang === 'hi' ? 'सूर्य' : 'Sun'}</div>
+                    <div><span className="font-bold text-sky-700">{lang === 'hi' ? 'चं' : 'Mo'}</span>: {lang === 'hi' ? 'चन्द्र' : 'Moon'}</div>
+                    <div><span className="font-bold text-rose-700">{lang === 'hi' ? 'मं' : 'Ma'}</span>: {lang === 'hi' ? 'मंगल' : 'Mars'}</div>
+                    <div><span className="font-bold text-emerald-700">{lang === 'hi' ? 'बु' : 'Me'}</span>: {lang === 'hi' ? 'बुध' : 'Mercury'}</div>
+                    <div><span className="font-bold text-yellow-700">{lang === 'hi' ? 'गु' : 'Ju'}</span>: {lang === 'hi' ? 'गुरु' : 'Jupiter'}</div>
+                    <div><span className="font-bold text-pink-700">{lang === 'hi' ? 'शु' : 'Ve'}</span>: {lang === 'hi' ? 'शुक्र' : 'Venus'}</div>
+                    <div><span className="font-bold text-indigo-700">{lang === 'hi' ? 'श' : 'Sa'}</span>: {lang === 'hi' ? 'शनि' : 'Saturn'}</div>
+                    <div><span className="font-bold text-purple-700">{lang === 'hi' ? 'रा' : 'Ra'}</span>: {lang === 'hi' ? 'राहु' : 'Rahu'}</div>
+                    <div><span className="font-bold text-purple-700">{lang === 'hi' ? 'के' : 'Ke'}</span>: {lang === 'hi' ? 'केतु' : 'Ketu'}</div>
+                    <div><span className="font-bold text-amber-800">{lang === 'hi' ? '(व)' : '(R)'}</span>: {lang === 'hi' ? 'वक्री' : 'Retro'}</div>
+                </div>
             </div>
         </div>
     );

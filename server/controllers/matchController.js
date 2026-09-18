@@ -1,40 +1,4 @@
-// Helper to simulate matching score
-const calculateMatchScore = (p1, p2) => {
-    // Simulation of Ashtakoot Guna Milan (Max 36)
-    // In a real app, this would use complex logic comparing Nakshatras and Rashis
-
-    // Deterministic random score based on names to keep it consistent
-    const seed = p1.name.length + p2.name.length + new Date().getDate();
-    const score = Math.floor((seed * 123) % 36) + 1; // Random score between 1 and 36
-
-    let status = 'Low';
-    let description = 'Compatibility is low. Challenges may arise in understanding and harmony.';
-
-    if (score > 18 && score <= 25) {
-        status = 'Medium';
-        description = 'Average compatibility. With mutual understanding, this match can work well.';
-    } else if (score > 25) {
-        status = 'High';
-        description = 'Excellent match! High compatibility indicates a harmonious and prosperous relationship.';
-    }
-
-    return {
-        total_score: score,
-        max_score: 36,
-        status,
-        description,
-        area_scores: {
-            varna: 1,
-            vashya: 2,
-            tara: 3,
-            yoni: 4,
-            graha_maitri: 5,
-            gana: 6,
-            bhakoot: 7,
-            nadi: 8
-        }
-    };
-};
+const { calculateVedicBirthChart, calculateAshtakootMilan } = require('../utils/vedicAstro');
 
 // @desc    Generate Match Report
 // @route   POST /api/match
@@ -43,17 +7,56 @@ exports.createMatch = async (req, res) => {
     try {
         const { personA, personB } = req.body;
 
-        // In a real app, we would calculate planetary positions for both first
-        // Here we just simulate the matching result directly
+        if (!personA || !personB) {
+            return res.status(400).json({ message: 'Both persons details are required' });
+        }
 
-        const matchResult = calculateMatchScore(personA, personB);
+        // Calculate birth charts for both partners
+        const chartA = calculateVedicBirthChart(
+            personA.dob || '1995-01-01',
+            personA.tob || '12:00',
+            personA.lat || 28.6139,
+            personA.lon || 77.2090,
+            personA.timezone || 5.5
+        );
+
+        const chartB = calculateVedicBirthChart(
+            personB.dob || '1996-01-01',
+            personB.tob || '12:00',
+            personB.lat || 28.6139,
+            personB.lon || 77.2090,
+            personB.timezone || 5.5
+        );
+
+        const matchResult = calculateAshtakootMilan(chartA, chartB);
 
         res.json({
-            personA: { name: personA.name },
-            personB: { name: personB.name },
+            personA: {
+                name: (personA.name || 'Groom').trim(),
+                rashi: chartA.rashi,
+                rashiHi: chartA.rashiHi,
+                nakshatra: chartA.nakshatra,
+                nakshatraHi: chartA.nakshatraHi,
+                pada: chartA.pada,
+                lagna: chartA.lagna.sign,
+                manglik: chartA.dosha.manglik,
+                manglikStatus: chartA.dosha.manglikStatus
+            },
+            personB: {
+                name: (personB.name || 'Bride').trim(),
+                rashi: chartB.rashi,
+                rashiHi: chartB.rashiHi,
+                nakshatra: chartB.nakshatra,
+                nakshatraHi: chartB.nakshatraHi,
+                pada: chartB.pada,
+                lagna: chartB.lagna.sign,
+                manglik: chartB.dosha.manglik,
+                manglikStatus: chartB.dosha.manglikStatus
+            },
             match: matchResult
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Error generating Match report:', error);
+        res.status(500).json({ message: error.message || 'Failed to generate Match report' });
     }
 };

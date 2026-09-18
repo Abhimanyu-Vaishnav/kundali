@@ -34,7 +34,7 @@ app.get('/', (req, res) => {
 });
 
 // Sync Database and Start Server
-sequelize.sync({ force: false }) // Set force: true to drop tables on startup
+sequelize.sync()
     .then(() => {
         console.log('SQLite Database Connected & Synced');
         app.listen(PORT, () => {

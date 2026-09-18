@@ -64,6 +64,100 @@ const Kundali = sequelize.define('Kundali', {
         set(value) {
             this.setDataValue('dosha', JSON.stringify(value));
         }
+    },
+    navamsha: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('navamsha');
+            return rawValue ? JSON.parse(rawValue) : null;
+        },
+        set(value) {
+            this.setDataValue('navamsha', JSON.stringify(value));
+        }
+    },
+    panchang: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('panchang');
+            return rawValue ? JSON.parse(rawValue) : null;
+        },
+        set(value) {
+            this.setDataValue('panchang', JSON.stringify(value));
+        }
+    },
+    avakahada: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('avakahada');
+            return rawValue ? JSON.parse(rawValue) : null;
+        },
+        set(value) {
+            this.setDataValue('avakahada', JSON.stringify(value));
+        }
+    },
+    dashas: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('dashas');
+            return rawValue ? JSON.parse(rawValue) : null;
+        },
+        set(value) {
+            this.setDataValue('dashas', JSON.stringify(value));
+        }
+    },
+    horoscope: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('horoscope');
+            return rawValue ? JSON.parse(rawValue) : null;
+        },
+        set(value) {
+            this.setDataValue('horoscope', JSON.stringify(value));
+        }
+    },
+    ayanamsha: DataTypes.FLOAT,
+    pada: DataTypes.INTEGER,
+    rashiHi: DataTypes.STRING,
+    nakshatraHi: DataTypes.STRING,
+    divisionalCharts: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('divisionalCharts');
+            return rawValue ? JSON.parse(rawValue) : null;
+        },
+        set(value) {
+            this.setDataValue('divisionalCharts', JSON.stringify(value));
+        }
+    },
+    bhavaphala: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('bhavaphala');
+            return rawValue ? JSON.parse(rawValue) : [];
+        },
+        set(value) {
+            this.setDataValue('bhavaphala', JSON.stringify(value));
+        }
+    },
+    ashtakvarga: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('ashtakvarga');
+            return rawValue ? JSON.parse(rawValue) : null;
+        },
+        set(value) {
+            this.setDataValue('ashtakvarga', JSON.stringify(value));
+        }
+    },
+    sadeSati: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('sadeSati');
+            return rawValue ? JSON.parse(rawValue) : null;
+        },
+        set(value) {
+            this.setDataValue('sadeSati', JSON.stringify(value));
+        }
     }
 });
 

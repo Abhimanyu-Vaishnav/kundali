@@ -84,8 +84,8 @@ const History = () => {
                                             {kundali.gender}
                                         </span>
                                     </div>
-                                    <div className="w-10 h-10 rounded-xl bg-surface/50 flex items-center justify-center text-lg border border-glassBorder/10">
-                                        {kundali.lagna.sign.substring(0, 2)}
+                                    <div className="w-10 h-10 rounded-xl bg-surface/50 flex items-center justify-center text-lg border border-glassBorder/10 font-bold text-amber-500">
+                                        {kundali.lagna?.sign ? kundali.lagna.sign.substring(0, 2) : 'Lg'}
                                     </div>
                                 </div>
 

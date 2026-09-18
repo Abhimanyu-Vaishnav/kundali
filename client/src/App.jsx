@@ -17,9 +17,9 @@ function App() {
         <ThemeProvider>
             <AuthProvider>
                 <Router>
-                    <div className="min-h-screen flex flex-col bg-background text-textMain transition-colors duration-300">
+                    <div className="min-h-screen flex flex-col bg-background text-textMain transition-colors duration-300 print:min-h-0 print:block print:bg-white">
                         <Navbar />
-                        <main className="flex-grow container mx-auto px-4 py-8">
+                        <main className="flex-grow container mx-auto px-4 py-8 print:p-0 print:m-0 print:max-w-none print:w-full print:block">
                             <Routes>
                                 <Route path="/" element={<Home />} />
                                 <Route path="/login" element={<Login />} />

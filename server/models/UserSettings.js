@@ -38,10 +38,9 @@ const UserSettings = sequelize.define('UserSettings', {
         type: DataTypes.STRING,
         defaultValue: null
     },
-    // Language Preference
     language: {
         type: DataTypes.ENUM('en', 'hi'),
-        defaultValue: 'en'
+        defaultValue: 'hi'
     },
     // Default PDF Sections
     pdfSections: {
@@ -52,17 +51,40 @@ const UserSettings = sequelize.define('UserSettings', {
                 basicChart: true,
                 planetaryPositions: true,
                 doshaAnalysis: true,
-                yearlyHoroscope: false,
-                saniDosh: false,
+                yearlyHoroscope: true,
+                saniDosh: true,
                 mantras: true,
                 poojaVidhi: false,
-                dashaPeriods: false,
-                yogas: false
+                dashaPeriods: true,
+                yogas: true,
+                divisionalCharts: true,
+                bhavaphala: true,
+                ashtakvarga: true
             };
         },
         set(value) {
             this.setDataValue('pdfSections', JSON.stringify(value));
         }
+    },
+    // Watermark customization
+    watermark: {
+        type: DataTypes.TEXT,
+        get() {
+            const rawValue = this.getDataValue('watermark');
+            return rawValue ? JSON.parse(rawValue) : {
+                enabled: true,
+                type: 'om', // 'om' | 'shree' | 'swastik' | 'ganesha' | 'mandala'
+                opacity: 0.08
+            };
+        },
+        set(value) {
+            this.setDataValue('watermark', JSON.stringify(value));
+        }
+    },
+    // Border style
+    borderStyle: {
+        type: DataTypes.STRING,
+        defaultValue: 'traditional-gold' // 'traditional-gold' | 'royal-maroon' | 'classic'
     }
 });
 

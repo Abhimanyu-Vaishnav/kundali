@@ -32,7 +32,9 @@ exports.updateSettings = async (req, res) => {
             address,
             logoUrl,
             language,
-            pdfSections
+            pdfSections,
+            watermark,
+            borderStyle
         } = req.body;
 
         let settings = await UserSettings.findOne({ where: { userId: req.user.id } });
@@ -46,19 +48,23 @@ exports.updateSettings = async (req, res) => {
                 email,
                 address,
                 logoUrl,
-                language,
-                pdfSections
+                language: language || 'hi',
+                pdfSections,
+                watermark,
+                borderStyle
             });
         } else {
             // Update existing
             await settings.update({
-                astrologerName: astrologerName || settings.astrologerName,
-                contactNumber: contactNumber || settings.contactNumber,
-                email: email || settings.email,
-                address: address || settings.address,
+                astrologerName: astrologerName !== undefined ? astrologerName : settings.astrologerName,
+                contactNumber: contactNumber !== undefined ? contactNumber : settings.contactNumber,
+                email: email !== undefined ? email : settings.email,
+                address: address !== undefined ? address : settings.address,
                 logoUrl: logoUrl !== undefined ? logoUrl : settings.logoUrl,
-                language: language || settings.language,
-                pdfSections: pdfSections || settings.pdfSections
+                language: language !== undefined ? language : settings.language,
+                pdfSections: pdfSections !== undefined ? pdfSections : settings.pdfSections,
+                watermark: watermark !== undefined ? watermark : settings.watermark,
+                borderStyle: borderStyle !== undefined ? borderStyle : settings.borderStyle
             });
         }
 

@@ -40,7 +40,12 @@ const Matchmaking = () => {
                 }
             };
             const { data } = await axios.post('/match', payload);
-            setMatchResult(data.match);
+            setMatchResult({
+                ...data.match,
+                score: data.match.total_score,
+                personA: data.personA,
+                personB: data.personB
+            });
         } catch (error) {
             console.error('Error calculating match', error);
         } finally {
@@ -57,7 +62,7 @@ const Matchmaking = () => {
             >
                 <h1 className="text-3xl md:text-4xl font-bold mb-4 text-textMain">Kundali Matching</h1>
                 <p className="text-textMuted max-w-2xl mx-auto">
-                    Check marriage compatibility (Guna Milan) between two individuals based on Vedic astrology principles.
+                    Check marriage compatibility (Ashtakoot Guna Milan) between two individuals based on authentic Vedic astrology principles.
                 </p>
             </motion.div>
 
@@ -178,73 +183,112 @@ const Matchmaking = () => {
                     className="relative"
                 >
                     {matchResult ? (
-                        <div className="glass-card p-8 text-center relative overflow-hidden">
+                        <div className="glass-card p-6 md:p-8 text-center relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500" />
 
-                            <div className="mb-8">
-                                <h3 className="text-textMuted uppercase tracking-widest text-sm mb-2">Compatibility Score</h3>
+                            {/* Astrological Summary of Both */}
+                            {matchResult.personA && matchResult.personB && (
+                                <div className="grid grid-cols-2 gap-3 mb-6 text-xs text-left">
+                                    <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                                        <div className="font-bold text-blue-400 text-sm mb-1">{matchResult.personA.name}</div>
+                                        <div>Rashi: <strong>{matchResult.personA.rashi}</strong></div>
+                                        <div>Nakshatra: <strong>{matchResult.personA.nakshatra} ({matchResult.personA.pada})</strong></div>
+                                        <div className="text-[11px] mt-1 text-textMuted">{matchResult.personA.manglikStatus}</div>
+                                    </div>
+                                    <div className="p-3 bg-pink-500/10 rounded-xl border border-pink-500/20">
+                                        <div className="font-bold text-pink-400 text-sm mb-1">{matchResult.personB.name}</div>
+                                        <div>Rashi: <strong>{matchResult.personB.rashi}</strong></div>
+                                        <div>Nakshatra: <strong>{matchResult.personB.nakshatra} ({matchResult.personB.pada})</strong></div>
+                                        <div className="text-[11px] mt-1 text-textMuted">{matchResult.personB.manglikStatus}</div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mb-6">
+                                <h3 className="text-textMuted uppercase tracking-widest text-xs mb-2">Ashtakoot Guna Milan Score</h3>
                                 <div className="relative inline-block">
-                                    <svg className="w-48 h-48 transform -rotate-90">
+                                    <svg className="w-44 h-44 transform -rotate-90">
                                         <circle
-                                            cx="96"
-                                            cy="96"
-                                            r="88"
+                                            cx="88"
+                                            cy="88"
+                                            r="80"
                                             stroke="currentColor"
                                             strokeWidth="12"
                                             fill="transparent"
                                             className="text-surface"
                                         />
                                         <circle
-                                            cx="96"
-                                            cy="96"
-                                            r="88"
+                                            cx="88"
+                                            cy="88"
+                                            r="80"
                                             stroke="currentColor"
                                             strokeWidth="12"
                                             fill="transparent"
-                                            strokeDasharray={552}
-                                            strokeDashoffset={552 - (552 * matchResult.score) / 36}
-                                            className={`transition-all duration-1000 ease-out ${matchResult.score > 25 ? 'text-green-500' :
-                                                matchResult.score > 18 ? 'text-yellow-500' : 'text-red-500'
-                                                }`}
+                                            strokeDasharray={502}
+                                            strokeDashoffset={502 - (502 * (matchResult.score || matchResult.total_score || 0)) / 36}
+                                            className={`transition-all duration-1000 ease-out ${
+                                                (matchResult.score || matchResult.total_score) >= 28 ? 'text-emerald-500' :
+                                                (matchResult.score || matchResult.total_score) >= 18 ? 'text-amber-500' : 'text-rose-500'
+                                            }`}
                                         />
                                     </svg>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-5xl font-bold text-textMain">{matchResult.score}</span>
-                                        <span className="text-textMuted text-sm">out of 36</span>
+                                        <span className="text-4xl font-extrabold text-textMain">{matchResult.score || matchResult.total_score}</span>
+                                        <span className="text-textMuted text-xs">out of 36 Gunas</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mb-8">
-                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-4 ${matchResult.score > 25 ? 'bg-green-500/20 text-green-400' :
-                                    matchResult.score > 18 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'
-                                    }`}>
-                                    {matchResult.score > 25 ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
-                                    {matchResult.status} Compatibility
+                            <div className="mb-6">
+                                <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-3 ${
+                                    (matchResult.score || matchResult.total_score) >= 28 ? 'bg-emerald-500/20 text-emerald-400' :
+                                    (matchResult.score || matchResult.total_score) >= 18 ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'
+                                }`}>
+                                    {(matchResult.score || matchResult.total_score) >= 18 ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+                                    {matchResult.status}
                                 </div>
-                                <p className="text-textMain leading-relaxed">
+                                <p className="text-textMain text-xs leading-relaxed px-2">
                                     {matchResult.description}
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 text-left">
-                                <div className="glass-card p-4 bg-surface/50">
-                                    <div className="text-xs text-textMuted uppercase mb-1">Varna</div>
-                                    <div className="font-medium text-green-400">1 / 1</div>
+                            {/* 8 Ashtakoot Guna breakdown */}
+                            {matchResult.area_scores && (
+                                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                    <div className="glass-card p-2 bg-surface/50">
+                                        <div className="text-[10px] text-textMuted uppercase font-bold">Varna</div>
+                                        <div className="font-bold text-textMain">{matchResult.area_scores.varna} / 1</div>
+                                    </div>
+                                    <div className="glass-card p-2 bg-surface/50">
+                                        <div className="text-[10px] text-textMuted uppercase font-bold">Vashya</div>
+                                        <div className="font-bold text-textMain">{matchResult.area_scores.vashya} / 2</div>
+                                    </div>
+                                    <div className="glass-card p-2 bg-surface/50">
+                                        <div className="text-[10px] text-textMuted uppercase font-bold">Tara</div>
+                                        <div className="font-bold text-textMain">{matchResult.area_scores.tara} / 3</div>
+                                    </div>
+                                    <div className="glass-card p-2 bg-surface/50">
+                                        <div className="text-[10px] text-textMuted uppercase font-bold">Yoni</div>
+                                        <div className="font-bold text-textMain">{matchResult.area_scores.yoni} / 4</div>
+                                    </div>
+                                    <div className="glass-card p-2 bg-surface/50">
+                                        <div className="text-[10px] text-textMuted uppercase font-bold">Maitri</div>
+                                        <div className="font-bold text-textMain">{matchResult.area_scores.graha_maitri} / 5</div>
+                                    </div>
+                                    <div className="glass-card p-2 bg-surface/50">
+                                        <div className="text-[10px] text-textMuted uppercase font-bold">Gana</div>
+                                        <div className="font-bold text-textMain">{matchResult.area_scores.gana} / 6</div>
+                                    </div>
+                                    <div className="glass-card p-2 bg-surface/50">
+                                        <div className="text-[10px] text-textMuted uppercase font-bold">Bhakoot</div>
+                                        <div className="font-bold text-textMain">{matchResult.area_scores.bhakoot} / 7</div>
+                                    </div>
+                                    <div className="glass-card p-2 bg-surface/50">
+                                        <div className="text-[10px] text-textMuted uppercase font-bold">Nadi</div>
+                                        <div className="font-bold text-textMain">{matchResult.area_scores.nadi} / 8</div>
+                                    </div>
                                 </div>
-                                <div className="glass-card p-4 bg-surface/50">
-                                    <div className="text-xs text-textMuted uppercase mb-1">Vashya</div>
-                                    <div className="font-medium text-yellow-400">1.5 / 2</div>
-                                </div>
-                                <div className="glass-card p-4 bg-surface/50">
-                                    <div className="text-xs text-textMuted uppercase mb-1">Tara</div>
-                                    <div className="font-medium text-green-400">3 / 3</div>
-                                </div>
-                                <div className="glass-card p-4 bg-surface/50">
-                                    <div className="text-xs text-textMuted uppercase mb-1">Yoni</div>
-                                    <div className="font-medium text-red-400">2 / 4</div>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     ) : (
                         <div className="h-full min-h-[400px] glass-card flex flex-col justify-center items-center text-center p-8 border-2 border-dashed border-textMuted/20">
