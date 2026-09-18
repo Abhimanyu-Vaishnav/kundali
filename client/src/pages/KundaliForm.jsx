@@ -643,7 +643,8 @@ const KundaliForm = () => {
                 </div>
             ) : (
                 /* IF KUNDALI IS GENERATED: Sleek, Modular, Full-Width Interface */
-                <div className="space-y-6">
+                <>
+                    <div className="space-y-6 print:hidden no-print">
                     {/* Top Action Bar */}
                     <div className="glass-card p-5 rounded-2xl shadow-md border border-glassBorder/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
@@ -652,7 +653,7 @@ const KundaliForm = () => {
                                     {kundaliData.name}
                                 </h2>
                                 <span className="px-2.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25 text-xs font-bold">
-                                    {isHi ? kundaliData.rashiHi || kundaliData.rashi : kundaliData.rashi}
+                                    {getVedicSignLabel(kundaliData.rashi)}
                                 </span>
                             </div>
                             <p className="text-xs text-textMuted mt-1 flex flex-wrap items-center gap-2">
@@ -744,7 +745,7 @@ const KundaliForm = () => {
                                 <div className="glass-card p-3.5 rounded-xl border border-glassBorder/15 text-center">
                                     <div className="text-[10px] uppercase font-bold text-primary tracking-wider">{t.lagnaAscendant}</div>
                                     <div className="text-lg font-extrabold text-textMain mt-0.5">
-                                        {isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}
+                                        {getVedicSignLabel(kundaliData.lagna?.sign)}
                                     </div>
                                     <div className="text-[11px] text-textMuted font-mono">
                                         {kundaliData.lagna?.dms || `${kundaliData.lagna?.degree?.toFixed(2)}°`}
@@ -753,28 +754,28 @@ const KundaliForm = () => {
                                 <div className="glass-card p-3.5 rounded-xl border border-glassBorder/15 text-center">
                                     <div className="text-[10px] uppercase font-bold text-sky-500 tracking-wider">{t.chandraRashi}</div>
                                     <div className="text-lg font-extrabold text-textMain mt-0.5">
-                                        {isHi ? kundaliData.rashiHi || kundaliData.rashi : kundaliData.rashi}
+                                        {getVedicSignLabel(kundaliData.rashi)}
                                     </div>
                                     <div className="text-[11px] text-textMuted">
-                                        {kundaliData.avakahada?.rashiLord ? `${t.rashiLord}: ${kundaliData.avakahada.rashiLord}` : 'Moon Sign'}
+                                        स्वामी: {getVedicPlanetLabel(kundaliData.avakahada?.rashiLord || 'Moon')}
                                     </div>
                                 </div>
                                 <div className="glass-card p-3.5 rounded-xl border border-glassBorder/15 text-center">
                                     <div className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">{t.birthNakshatra}</div>
                                     <div className="text-lg font-extrabold text-textMain mt-0.5">
-                                        {isHi ? kundaliData.nakshatraHi || kundaliData.nakshatra : kundaliData.nakshatra}
+                                        {kundaliData.nakshatraHi || kundaliData.nakshatra}
                                     </div>
                                     <div className="text-[11px] text-textMuted">
-                                        {t.nakshatraPada} {kundaliData.pada || 1}
+                                        {t.nakshatraPada} {kundaliData.pada || 1} • {kundaliData.avakahada?.nakshatraLord || 'राहु'}
                                     </div>
                                 </div>
                                 <div className="glass-card p-3.5 rounded-xl border border-glassBorder/15 text-center">
-                                    <div className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider">{t.namaakshar}</div>
+                                    <div className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider">{t.namaakshar} व पाया</div>
                                     <div className="text-2xl font-black text-textMain mt-0.5">
-                                        {kundaliData.avakahada?.namaakshar || 'अ'}
+                                        {kundaliData.avakahada?.namaakshar || 'ङ'}
                                     </div>
-                                    <div className="text-[11px] text-textMuted">
-                                        {kundaliData.avakahada?.paya || 'Paya'}
+                                    <div className="text-[11px] text-textMuted font-medium">
+                                        {kundaliData.avakahada?.paya ? `${kundaliData.avakahada.paya} पाया` : 'लौह पाया'}
                                     </div>
                                 </div>
                             </div>
@@ -830,9 +831,11 @@ const KundaliForm = () => {
                                 <div className="p-4 border-b border-glassBorder/10 flex items-center justify-between">
                                     <h3 className="text-sm font-bold text-textMain flex items-center gap-2">
                                         <Compass size={16} className="text-primary" />
-                                        Planetary Positions & Dignities
+                                        {isHi ? 'समस्त नवग्रह स्पष्ट स्थिति एवं दीप्ति सारणी' : 'Planetary Positions & Dignities'}
                                     </h3>
-                                    <span className="text-xs text-textMuted font-mono">Lahiri Ayanamsha</span>
+                                    <span className="text-xs text-textMuted font-mono">
+                                        {isHi ? 'चित्रापक्षीय लहरी अयनांश' : 'Lahiri Ayanamsha'}
+                                    </span>
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-xs text-left">
@@ -850,43 +853,49 @@ const KundaliForm = () => {
                                         </thead>
                                         <tbody className="divide-y divide-glassBorder/10">
                                             <tr className="bg-primary/5 font-semibold">
-                                                <td className="px-4 py-2.5 font-bold text-primary">{isHi ? 'लग्न' : 'Ascendant'}</td>
-                                                <td className="px-3 py-2.5">{isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}</td>
-                                                <td className="px-3 py-2.5 font-mono">{kundaliData.lagna?.dms || `${kundaliData.lagna?.degree?.toFixed(2)}°`}</td>
-                                                <td className="px-3 py-2.5 font-bold">1</td>
-                                                <td className="px-3 py-2.5">-</td>
-                                                <td className="px-3 py-2.5">{isHi ? kundaliData.navamsha?.navamshaLagna?.signHi : kundaliData.navamsha?.navamshaLagna?.sign}</td>
-                                                <td className="px-3 py-2.5">-</td>
-                                                <td className="px-4 py-2.5 text-emerald-600 dark:text-emerald-400">{t.directPlanet}</td>
+                                                <td className="px-4 py-2.5 font-bold text-primary">{isHi ? 'लग्न (Ascendant)' : 'Ascendant'}</td>
+                                                <td className="px-3 py-2.5 font-bold text-textMain">{getVedicSignLabel(kundaliData.lagna?.sign)}</td>
+                                                <td className="px-3 py-2.5 font-mono font-semibold text-textMain">{kundaliData.lagna?.dms || `${kundaliData.lagna?.degree?.toFixed(2)}°`}</td>
+                                                <td className="px-3 py-2.5 font-bold text-primary">1</td>
+                                                <td className="px-3 py-2.5 text-textMuted">-</td>
+                                                <td className="px-3 py-2.5 text-textMain font-medium">{getVedicSignLabel(kundaliData.navamsha?.navamshaLagna?.sign)}</td>
+                                                <td className="px-3 py-2.5 text-textMain font-medium">लग्नेश: {getVedicPlanetLabel(kundaliData.lagna?.lord)}</td>
+                                                <td className="px-4 py-2.5 text-emerald-600 dark:text-emerald-400 font-bold">{isHi ? 'उदित' : t.directPlanet}</td>
                                             </tr>
-                                            {kundaliData.planets?.map((p) => (
-                                                <tr key={p.name} className="hover:bg-surface/60 transition-colors">
-                                                    <td className="px-4 py-2.5 font-semibold text-textMain">
-                                                        {isHi ? `${p.hindi} (${p.abbrHi})` : `${p.name} (${p.abbrEn})`}
-                                                        {p.isRetrograde && <span className="ml-1 text-red-500 font-bold">{isHi ? '(व)' : '(R)'}</span>}
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-textMuted">{isHi ? p.signHi || p.sign : p.sign}</td>
-                                                    <td className="px-3 py-2.5 font-mono text-textMain">{p.dms || `${p.degree?.toFixed(2)}°`}</td>
-                                                    <td className="px-3 py-2.5 font-bold text-primary">{p.house}</td>
-                                                    <td className="px-3 py-2.5 text-textMuted">{isHi ? p.nakshatraHi || p.nakshatra : p.nakshatra} ({p.pada})</td>
-                                                    <td className="px-3 py-2.5 text-textMuted">{isHi ? p.navamshaSignHi || p.navamshaSign : p.navamshaSign}</td>
-                                                    <td className="px-3 py-2.5">
-                                                        <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${
-                                                            (p.dignityEn || '').includes('Exalted') ? 'bg-amber-500/20 text-amber-500' :
-                                                            (p.dignityEn || '').includes('Debilitated') ? 'bg-red-500/20 text-red-500' :
-                                                            (p.dignityEn || '').includes('Own') ? 'bg-emerald-500/20 text-emerald-500' :
-                                                            'text-textMuted'
-                                                        }`}>
-                                                            {isHi ? p.dignity || 'सम' : p.dignityEn || 'Neutral'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-2.5">
-                                                        {p.isCombust ? <span className="text-red-500 font-bold">{t.combust}</span> :
-                                                         p.isRetrograde ? <span className="text-orange-500 font-bold">{t.retrograde}</span> :
-                                                         <span className="text-emerald-500">{t.directPlanet}</span>}
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {kundaliData.planets?.map((p) => {
+                                                const dignityText = getVedicDignityLabel(p.dignity);
+                                                const isExalted = dignityText.includes('उच्च');
+                                                const isDebilitated = dignityText.includes('नीच');
+                                                const isOwn = dignityText.includes('स्वक्षेत्री');
+                                                return (
+                                                    <tr key={p.name} className="hover:bg-surface/60 transition-colors">
+                                                        <td className="px-4 py-2.5 font-bold text-textMain">
+                                                            {isHi ? `${p.hindi} (${p.abbrHi})` : `${p.name} (${p.abbrEn})`}
+                                                            {p.isRetrograde && <span className="ml-1 text-red-500 font-bold">(व)</span>}
+                                                        </td>
+                                                        <td className="px-3 py-2.5 font-semibold text-textMain">{getVedicSignLabel(p.sign)}</td>
+                                                        <td className="px-3 py-2.5 font-mono font-semibold text-textMain">{p.dms || `${p.degree?.toFixed(2)}°`}</td>
+                                                        <td className="px-3 py-2.5 font-bold text-primary">{p.house}</td>
+                                                        <td className="px-3 py-2.5 text-textMain font-medium">{isHi ? p.nakshatraHi || p.nakshatra : p.nakshatra} ({p.pada})</td>
+                                                        <td className="px-3 py-2.5 text-textMain font-medium">{getVedicSignLabel(p.navamshaSign)}</td>
+                                                        <td className="px-3 py-2.5">
+                                                            <span className={`px-2 py-0.5 rounded-md font-bold text-[11px] ${
+                                                                isExalted ? 'bg-amber-500/20 text-amber-500' :
+                                                                isDebilitated ? 'bg-red-500/20 text-red-500' :
+                                                                isOwn ? 'bg-emerald-500/20 text-emerald-500' :
+                                                                'text-textMain'
+                                                            }`}>
+                                                                {dignityText}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-2.5 font-medium">
+                                                            {p.isCombust ? <span className="text-red-500 font-bold">{isHi ? 'अस्त' : t.combust}</span> :
+                                                             p.isRetrograde ? <span className="text-orange-500 font-bold">{isHi ? 'वक्री (R)' : t.retrograde}</span> :
+                                                             <span className="text-emerald-500">{isHi ? 'मार्गी' : t.directPlanet}</span>}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1023,17 +1032,17 @@ const KundaliForm = () => {
                                                         {isHi ? b.nameHi : b.nameEn}
                                                     </span>
                                                     <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-semibold">
-                                                        {isHi ? b.signHi : b.sign} ({b.lord})
+                                                        {getVedicSignLabel(b.sign)} • स्वामी: {getVedicPlanetLabel(b.lord)}
                                                     </span>
                                                 </div>
                                                 <div className="text-textMuted space-y-0.5 text-[11px]">
-                                                    <div><strong className="text-textMain">{t.placement}:</strong> {isHi ? b.lordPlacement : b.lordPlacementEn}</div>
+                                                    <div><strong className="text-textMain">{t.placement}:</strong> {isHi ? (b.lordPlacementHi || b.lordPlacement) : b.lordPlacementEn}</div>
                                                     <div>
                                                         <strong className="text-textMain">{t.occupants}:</strong>{' '}
                                                         {b.occupants && b.occupants.length > 0 ? (
-                                                            b.occupants.map(o => (isHi ? `${o.hindi} (${o.dignity})` : `${o.name} (${o.dignity})`)).join(', ')
+                                                            b.occupants.map(o => (isHi ? `${getVedicPlanetLabel(o.name || o.hindi)} (${getVedicDignityLabel(o.dignity)})` : `${getVedicPlanetLabel(o.name)} (${getVedicDignityLabel(o.dignity)})`)).join(', ')
                                                         ) : (
-                                                            <span className="text-textMuted/60">None</span>
+                                                            <span className="text-textMuted/60">{isHi ? 'कोई नहीं' : 'None'}</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -1177,6 +1186,7 @@ const KundaliForm = () => {
                             )}
                         </div>
                     )}
+                    </div>
 
                     {/* ========================================================================= */}
                     {/* AUTHENTIC PANDIT-GRADE 4-PAGE PRINTABLE PATRIKA (A4: 794px x 1123px)     */}
@@ -1185,10 +1195,9 @@ const KundaliForm = () => {
                     <div 
                         ref={printRef} 
                         style={{
-                            position: 'fixed',
+                            position: 'absolute',
                             top: 0,
-                            left: 0,
-                            transform: 'translateY(-25000px)',
+                            left: '-99999px',
                             width: '794px',
                             zIndex: -100,
                             pointerEvents: 'none',
@@ -1825,7 +1834,7 @@ const KundaliForm = () => {
                                             <p className="text-gray-800 leading-snug">
                                                 {kundaliData.sadeSati?.isUnderSadeSati
                                                     ? kundaliData.sadeSati?.status || 'शनि की साढ़ेसाती चल रही है, शनिवार को शनि देव की उपासना करें।'
-                                                    : 'वर्तमान में चन्द्र राशि मिथुन (Mithuna) से शनि का गोचर अनुकूल है। साढ़ेसाती अथवा ढैय्या का कोई अनिष्ट प्रभाव नहीं है।'}
+                                                    : `वर्तमान में चन्द्र राशि ${getVedicSignLabel(kundaliData.rashi)} से शनि का गोचर अनुकूल है। साढ़ेसाती अथवा ढैय्या का कोई अनिष्ट प्रभाव नहीं है।`}
                                             </p>
                                         </div>
                                     </div>
@@ -1864,9 +1873,9 @@ const KundaliForm = () => {
                                                 ॥ शुभ रत्न परामर्श (Gemstone Advice) ॥
                                             </div>
                                             <div className="space-y-0.5 text-gray-800">
-                                                <div><span className="text-gray-500 font-semibold">{t.lifeStone}:</span> <strong>मोती (Pearl)</strong> - कर्क लग्न हेतु चांदी में कनिष्ठिका उंगली में।</div>
-                                                <div><span className="text-gray-500 font-semibold">{t.luckyStone}:</span> <strong>मूंगा (Red Coral)</strong> - पंचमेश/दशमेश हेतु तांबे या सोने में अनामिका में।</div>
-                                                <div><span className="text-gray-500 font-semibold">{t.beneficStone}:</span> <strong>पुखराज (Yellow Sapphire)</strong> - भाग्येश गुरु हेतु सोने में तर्जनी उंगली में।</div>
+                                                <div><span className="text-gray-500 font-semibold">{t.lifeStone}:</span> <strong>{kundaliData.horoscope?.gemstones?.life || 'मोती (Pearl)'}</strong> - {getVedicSignLabel(kundaliData.lagna?.sign)} लग्न हेतु।</div>
+                                                <div><span className="text-gray-500 font-semibold">{t.luckyStone}:</span> <strong>{kundaliData.horoscope?.gemstones?.lucky || 'मूंगा (Red Coral)'}</strong> - अनुकूल फल प्रदायक।</div>
+                                                <div><span className="text-gray-500 font-semibold">{t.beneficStone}:</span> <strong>{kundaliData.horoscope?.gemstones?.benefic || 'पुखराज (Yellow Sapphire)'}</strong> - शुभ एवं भाग्योदय कारक।</div>
                                                 <div className="text-[8.5px] text-amber-900 italic pt-0.5 border-t border-amber-100">
                                                     नोट: रत्न सदैव योग्य ज्योतिषी के मार्गदर्शन उपरांत शुभ मुहूर्त में प्राण-प्रतिष्ठा करवाकर ही धारण करें।
                                                 </div>
@@ -1944,7 +1953,7 @@ const KundaliForm = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </>
             )}
         </div>
     );
