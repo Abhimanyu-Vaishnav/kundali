@@ -198,7 +198,7 @@ const KundaliForm = () => {
         window.print();
     };
 
-    // Multi-page PDF Download
+    // Multi-page PDF Download (4-Page Pandit-Grade Patrika)
     const handleDownloadPDF = async () => {
         if (!printRef.current) return;
         try {
@@ -210,7 +210,12 @@ const KundaliForm = () => {
                 return;
             }
 
-            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+                compress: true
+            });
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
 
@@ -220,16 +225,19 @@ const KundaliForm = () => {
                     scale: 2,
                     useCORS: true,
                     backgroundColor: '#FFFDF5',
-                    logging: false
+                    logging: false,
+                    width: 794,
+                    height: 1123,
+                    windowWidth: 1000
                 });
 
                 const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                if (i > 0) pdf.addPage();
-                pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+                if (i > 0) pdf.addPage('a4', 'portrait');
+                pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
             }
 
             const cleanName = (kundaliData?.name || 'Vedic_Patrika').replace(/\s+/g, '_');
-            pdf.save(`${cleanName}_Janam_Patrika.pdf`);
+            pdf.save(`${cleanName}_Sampoorna_Janam_Patrika.pdf`);
         } catch (err) {
             console.error('PDF Generation Error:', err);
             window.print();
@@ -1010,201 +1018,737 @@ const KundaliForm = () => {
                     )}
 
                     {/* ========================================================================= */}
-                    {/* TRADITIONAL PRINTABLE 3-PAGE PATRIKA CONTAINER (HIDDEN ON WEB SCREEN)      */}
-                    {/* RETAINED FOR 100% HIGH FIDELITY HTML2CANVAS PDF DOWNLOAD AND PRINT         */}
+                    {/* AUTHENTIC PANDIT-GRADE 4-PAGE PRINTABLE PATRIKA (A4: 794px x 1123px)     */}
+                    {/* RETAINED FOR 100% HIGH FIDELITY HTML2CANVAS PDF DOWNLOAD AND WINDOW.PRINT  */}
                     {/* ========================================================================= */}
                     <div 
                         ref={printRef} 
-                        className="fixed -left-[9999px] top-0 w-[794px] pointer-events-none opacity-0 print:opacity-100 print:static print:w-full print:pointer-events-auto patrika-container space-y-8 print:space-y-0"
+                        style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            transform: 'translateY(-25000px)',
+                            width: '794px',
+                            zIndex: -100,
+                            pointerEvents: 'none',
+                            backgroundColor: '#FFFDF5'
+                        }}
+                        className="patrika-print-root"
                     >
-                        {/* SHEET 1 */}
+                        {/* ===================================================================== */}
+                        {/* PAGE 1: मुख्य जन्म विवरण, लग्न/नवमांश कुण्डली, पंचांग व विस्तृत ग्रह स्थिति */}
+                        {/* ===================================================================== */}
                         <div
-                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] p-8 rounded-2xl shadow-xl overflow-hidden ${getBorderStyleClass()}`}
-                            style={{ fontFamily: '"Outfit", serif, sans-serif' }}
+                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] overflow-hidden ${getBorderStyleClass()}`}
+                            style={{
+                                width: '794px',
+                                minHeight: '1123px',
+                                maxHeight: '1123px',
+                                height: '1123px',
+                                boxSizing: 'border-box',
+                                padding: '20px 24px',
+                                fontFamily: '"Outfit", "Noto Serif Devanagari", Georgia, serif',
+                                backgroundColor: '#FFFDF5',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between'
+                            }}
                         >
                             {renderWatermarkForSheet()}
-                            <div className="relative z-10">
-                                <div className="text-center pb-4 mb-4 border-b-2 border-[#B91C1C]/25">
-                                    <div className="text-2xl font-bold text-[#B91C1C] tracking-widest mb-0.5">
-                                        {t.omGanesh}
-                                    </div>
-                                    <div className="text-xl font-extrabold text-[#78350F] uppercase tracking-wider">
-                                        {t.janamPatrika}
-                                    </div>
-                                    <div className="mt-3 grid grid-cols-4 gap-2.5 bg-[#FEF3C7]/80 p-2.5 rounded-xl border border-[#F59E0B]/40 text-left text-xs">
-                                        <div>
-                                            <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.fullName}:</span>
-                                            <span className="font-bold text-[#1F2937] text-sm">{kundaliData.name}</span>
+                            <div className="relative z-10 flex flex-col justify-between h-full">
+                                {/* Page Header & Invocations */}
+                                <div>
+                                    <div className="text-center border-b-2 border-[#991B1B]/30 pb-2 mb-2">
+                                        <div className="flex items-center justify-between text-[11px] font-bold text-[#991B1B] px-2 mb-0.5">
+                                            <span>॥ श्री कुलदेवतायै नमः ॥</span>
+                                            <span className="text-xl font-black tracking-widest text-[#991B1B]">॥ श्री गणेशाय नमः ॥</span>
+                                            <span>॥ श्री गुरुभ्यो नमः ॥</span>
                                         </div>
-                                        <div>
-                                            <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.dateOfBirth}:</span>
-                                            <span className="font-semibold text-[#1F2937]">
-                                                {new Date(kundaliData.dob).toLocaleDateString(isHi ? 'hi-IN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                            </span>
+                                        <div className="text-lg font-extrabold text-[#78350F] uppercase tracking-wider">
+                                            ॥ सम्पूर्ण प्रामाणिक वैदिक जन्म पत्रिका ॥
                                         </div>
-                                        <div>
-                                            <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.timeOfBirth}:</span>
-                                            <span className="font-semibold text-[#1F2937]">{kundaliData.tob}</span>
+                                        <div className="text-[10px] text-amber-900/80 font-medium tracking-wide">
+                                            (चित्रापक्षीय लहरी अयनांश • महर्षि पराशर प्रणीत बृहत्पाराशर होराशास्त्र पद्धति)
                                         </div>
-                                        <div>
-                                            <span className="text-[#92400E] block text-[10px] uppercase font-bold">{t.placeOfBirth}:</span>
-                                            <span className="font-semibold text-[#1F2937]">{kundaliData.place}</span>
-                                        </div>
-                                    </div>
-                                </div>
 
-                                <div className="grid grid-cols-4 gap-2 mb-4">
-                                    <div className="p-2 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200 text-center shadow-xs">
-                                        <div className="text-[9px] text-red-700 uppercase font-bold">{t.lagnaAscendant}</div>
-                                        <div className="text-base font-extrabold text-red-900 leading-tight">
-                                            {isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}
-                                        </div>
-                                    </div>
-                                    <div className="p-2 bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl border border-blue-200 text-center shadow-xs">
-                                        <div className="text-[9px] text-blue-700 uppercase font-bold">{t.chandraRashi}</div>
-                                        <div className="text-base font-extrabold text-blue-900 leading-tight">
-                                            {isHi ? kundaliData.rashiHi || kundaliData.rashi : kundaliData.rashi}
-                                        </div>
-                                    </div>
-                                    <div className="p-2 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-200 text-center shadow-xs">
-                                        <div className="text-[9px] text-amber-700 uppercase font-bold">{t.birthNakshatra}</div>
-                                        <div className="text-base font-extrabold text-amber-900 leading-tight">
-                                            {isHi ? kundaliData.nakshatraHi || kundaliData.nakshatra : kundaliData.nakshatra}
-                                        </div>
-                                    </div>
-                                    <div className="p-2 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 text-center shadow-xs">
-                                        <div className="text-[9px] text-emerald-700 uppercase font-bold">{t.namaakshar}</div>
-                                        <div className="text-xl font-black text-emerald-900 leading-tight">
-                                            {kundaliData.avakahada?.namaakshar || 'अ'}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <div className="p-3 bg-white rounded-xl border border-amber-300 flex justify-center">
-                                        <KundaliChart kundaliData={kundaliData} lang={lang} activeChartType="D1" showControls={false} size="compact" />
-                                    </div>
-                                    <div className="p-3 bg-white rounded-xl border border-amber-300 flex justify-center">
-                                        <KundaliChart kundaliData={kundaliData} lang={lang} activeChartType="D9" showControls={false} size="compact" />
-                                    </div>
-                                </div>
-
-                                <div className="overflow-x-auto rounded-lg border border-amber-200 bg-white">
-                                    <table className="w-full text-[10px] text-left">
-                                        <thead className="bg-[#FEF3C7] text-[#78350F] uppercase font-bold border-b border-amber-300">
-                                            <tr>
-                                                <th className="px-2 py-1.5">{t.planet}</th>
-                                                <th className="px-2 py-1.5">{t.sign}</th>
-                                                <th className="px-2 py-1.5">{t.degree}</th>
-                                                <th className="px-2 py-1.5">{t.house}</th>
-                                                <th className="px-2 py-1.5">{t.nakshatra}</th>
-                                                <th className="px-2 py-1.5">{t.dignity}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-amber-100">
-                                            {kundaliData.planets?.map((p) => (
-                                                <tr key={p.name}>
-                                                    <td className="px-2 py-1 font-bold text-gray-900">{isHi ? `${p.hindi}` : `${p.name}`}</td>
-                                                    <td className="px-2 py-1">{isHi ? p.signHi || p.sign : p.sign}</td>
-                                                    <td className="px-2 py-1 font-mono">{p.dms || `${p.degree?.toFixed(2)}°`}</td>
-                                                    <td className="px-2 py-1 font-bold text-amber-950">{p.house}</td>
-                                                    <td className="px-2 py-1">{isHi ? p.nakshatraHi || p.nakshatra : p.nakshatra}</td>
-                                                    <td className="px-2 py-1">{isHi ? p.dignity || 'सम' : p.dignityEn || 'Neutral'}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <div className="mt-4 pt-2 border-t border-amber-200/80 flex justify-between items-center text-[10px] text-gray-500">
-                                    <span>{kundaliData.name} • Janam Patrika</span>
-                                    <span className="font-bold text-[#B91C1C]">{isHi ? '॥ पृष्ठ १/३ ॥' : 'Page 1 of 3'}</span>
-                                    <span>Astrolite</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* SHEET 2 */}
-                        <div
-                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] p-8 rounded-2xl shadow-xl overflow-hidden ${getBorderStyleClass()}`}
-                            style={{ fontFamily: '"Outfit", serif, sans-serif' }}
-                        >
-                            {renderWatermarkForSheet()}
-                            <div className="relative z-10">
-                                <div className="text-center pb-3 mb-4 border-b-2 border-[#B91C1C]/25">
-                                    <div className="text-base font-extrabold text-[#78350F] uppercase tracking-wider">
-                                        {isHi ? '॥ द्वादश भाव विस्तृत फलादेश एवं सर्वाष्टकवर्ग ॥' : '12 Houses & Ashtakavarga'}
-                                    </div>
-                                </div>
-
-                                {kundaliData.bhavaphala && (
-                                    <div className="grid grid-cols-2 gap-2 text-[10px] mb-4">
-                                        {kundaliData.bhavaphala.map((b) => (
-                                            <div key={b.houseNum} className="p-2 bg-white rounded border border-amber-200">
-                                                <div className="font-bold text-[#78350F]">{isHi ? b.nameHi : b.nameEn} ({b.lord})</div>
-                                                <div className="text-gray-700">{isHi ? b.lordPlacement : b.lordPlacementEn}</div>
+                                        {/* Native Birth Identity Table */}
+                                        <div className="mt-2 grid grid-cols-4 gap-2 bg-[#FEF3C7]/80 p-2 rounded-xl border border-[#F59E0B]/40 text-left text-[11px]">
+                                            <div>
+                                                <span className="text-[#92400E] block text-[9px] uppercase font-bold">{t.fullName}:</span>
+                                                <span className="font-bold text-[#1F2937] text-xs truncate block">{kundaliData.name}</span>
                                             </div>
-                                        ))}
+                                            <div>
+                                                <span className="text-[#92400E] block text-[9px] uppercase font-bold">{t.gender}:</span>
+                                                <span className="font-semibold text-[#1F2937] capitalize">{t[kundaliData.gender] || kundaliData.gender}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[#92400E] block text-[9px] uppercase font-bold">{t.dateOfBirth}:</span>
+                                                <span className="font-semibold text-[#1F2937]">
+                                                    {new Date(kundaliData.dob).toLocaleDateString(isHi ? 'hi-IN' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[#92400E] block text-[9px] uppercase font-bold">{t.timeOfBirth}:</span>
+                                                <span className="font-semibold text-[#1F2937]">{kundaliData.tob} (IST)</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[#92400E] block text-[9px] uppercase font-bold">{t.placeOfBirth}:</span>
+                                                <span className="font-semibold text-[#1F2937] truncate block">{kundaliData.place}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[#92400E] block text-[9px] uppercase font-bold">अक्षांश / रेखांश:</span>
+                                                <span className="font-mono text-[#1F2937] text-[10px]">
+                                                    {Number(kundaliData.lat).toFixed(2)}°N, {Number(kundaliData.lon).toFixed(2)}°E
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[#92400E] block text-[9px] uppercase font-bold">समय क्षेत्र (TZ):</span>
+                                                <span className="font-semibold text-[#1F2937]">UTC+{kundaliData.timezone || 5.5}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-[#92400E] block text-[9px] uppercase font-bold">लहरी अयनांश:</span>
+                                                <span className="font-mono text-[#1F2937] text-[10px]">
+                                                    {kundaliData.ayanamshaDMS || `${kundaliData.ayanamsha}°`}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
-                                )}
 
-                                <div className="mt-4 pt-2 border-t border-amber-200/80 flex justify-between items-center text-[10px] text-gray-500">
-                                    <span>{kundaliData.name} • Bhavaphala</span>
-                                    <span className="font-bold text-[#B91C1C]">{isHi ? '॥ पृष्ठ २/३ ॥' : 'Page 2 of 3'}</span>
-                                    <span>Astrolite</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* SHEET 3 */}
-                        <div
-                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] p-8 rounded-2xl shadow-xl overflow-hidden ${getBorderStyleClass()}`}
-                            style={{ fontFamily: '"Outfit", serif, sans-serif' }}
-                        >
-                            {renderWatermarkForSheet()}
-                            <div className="relative z-10">
-                                <div className="text-center pb-3 mb-4 border-b-2 border-[#B91C1C]/25">
-                                    <div className="text-base font-extrabold text-[#78350F] uppercase tracking-wider">
-                                        {isHi ? '॥ विंशोत्तरी महादशा, दोष विचार एवं रत्न सुझाव ॥' : 'Dasha, Dosha & Gemstones'}
+                                    {/* 4 Sacred Pillars Banner */}
+                                    <div className="grid grid-cols-4 gap-2 mb-2">
+                                        <div className="p-1.5 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border border-red-200 text-center">
+                                            <div className="text-[9px] text-red-700 uppercase font-bold">{t.lagnaAscendant}</div>
+                                            <div className="text-sm font-extrabold text-red-900 leading-tight">
+                                                {isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}
+                                            </div>
+                                            <div className="text-[9px] text-red-600/80 font-mono">
+                                                {kundaliData.lagna?.dms || `${kundaliData.lagna?.degree?.toFixed(2)}°`}
+                                            </div>
+                                        </div>
+                                        <div className="p-1.5 bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl border border-blue-200 text-center">
+                                            <div className="text-[9px] text-blue-700 uppercase font-bold">{t.chandraRashi}</div>
+                                            <div className="text-sm font-extrabold text-blue-900 leading-tight">
+                                                {isHi ? kundaliData.rashiHi || kundaliData.rashi : kundaliData.rashi}
+                                            </div>
+                                            <div className="text-[9px] text-blue-600/80">
+                                                स्वामी: {kundaliData.avakahada?.rashiLord || 'चन्द्र'}
+                                            </div>
+                                        </div>
+                                        <div className="p-1.5 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-200 text-center">
+                                            <div className="text-[9px] text-amber-700 uppercase font-bold">{t.birthNakshatra}</div>
+                                            <div className="text-sm font-extrabold text-amber-900 leading-tight">
+                                                {isHi ? kundaliData.nakshatraHi || kundaliData.nakshatra : kundaliData.nakshatra}
+                                            </div>
+                                            <div className="text-[9px] text-amber-700/80">
+                                                चरण: {kundaliData.pada || 1} • {kundaliData.avakahada?.nakshatraLord || ''}
+                                            </div>
+                                        </div>
+                                        <div className="p-1.5 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 text-center">
+                                            <div className="text-[9px] text-emerald-700 uppercase font-bold">नामाक्षर व पाया</div>
+                                            <div className="text-base font-black text-emerald-900 leading-tight">
+                                                {kundaliData.avakahada?.namaakshar || 'अ'}
+                                            </div>
+                                            <div className="text-[9px] text-emerald-700/80">
+                                                {kundaliData.avakahada?.paya || 'रजत (चांदी)'}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
 
-                                {kundaliData.dashas && (
-                                    <div className="mb-4">
-                                        <table className="w-full text-[10px] text-left border border-amber-200 bg-white">
-                                            <thead className="bg-[#FEF3C7] text-[#78350F] font-bold">
+                                    {/* Middle Section: Dual Charts + Panchang/Avakahada Side-by-Side */}
+                                    <div className="grid grid-cols-12 gap-2 mb-2 items-center">
+                                        {/* D1 Lagna Chart */}
+                                        <div className="col-span-4 p-1.5 bg-white rounded-xl border border-amber-300 shadow-xs flex flex-col items-center">
+                                            <div className="text-[10px] font-bold text-[#991B1B] mb-0.5">लग्न कुण्डली (D1)</div>
+                                            <div className="w-[185px] h-[185px]">
+                                                <KundaliChart kundaliData={kundaliData} lang={lang} activeChartType="D1" showControls={false} size="compact" customTitle="" />
+                                            </div>
+                                        </div>
+
+                                        {/* D9 Navamsha Chart */}
+                                        <div className="col-span-4 p-1.5 bg-white rounded-xl border border-amber-300 shadow-xs flex flex-col items-center">
+                                            <div className="text-[10px] font-bold text-[#991B1B] mb-0.5">नवमांश कुण्डली (D9)</div>
+                                            <div className="w-[185px] h-[185px]">
+                                                <KundaliChart kundaliData={kundaliData} lang={lang} activeChartType="D9" showControls={false} size="compact" customTitle="" />
+                                            </div>
+                                        </div>
+
+                                        {/* Panchang & Avakahada Tables Stacked */}
+                                        <div className="col-span-4 space-y-1.5 text-[10px]">
+                                            {/* Panchang */}
+                                            <div className="p-1.5 bg-[#FFFDF0] rounded-lg border border-amber-200">
+                                                <div className="font-bold text-[#78350F] border-b border-amber-200 pb-0.5 mb-1 text-[10px]">
+                                                    जन्म कालीन पंचांग
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-x-1 gap-y-0.5 text-[9.5px]">
+                                                    <div><span className="text-gray-500">तिथि:</span> <strong className="text-gray-800">{kundaliData.panchang?.tithi || 'N/A'}</strong></div>
+                                                    <div><span className="text-gray-500">वार:</span> <strong className="text-gray-800">{kundaliData.panchang?.vaar || 'N/A'}</strong></div>
+                                                    <div><span className="text-gray-500">योग:</span> <strong className="text-gray-800">{kundaliData.panchang?.yoga || 'N/A'}</strong></div>
+                                                    <div><span className="text-gray-500">करण:</span> <strong className="text-gray-800">{kundaliData.panchang?.karana || 'N/A'}</strong></div>
+                                                    <div className="col-span-2 text-gray-500">
+                                                        सूर्योदय / सूर्यास्त: <span className="font-mono font-bold text-gray-800">{kundaliData.panchang?.sunrise} / {kundaliData.panchang?.sunset}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Avakahada */}
+                                            <div className="p-1.5 bg-[#FFFDF0] rounded-lg border border-amber-200">
+                                                <div className="font-bold text-[#78350F] border-b border-amber-200 pb-0.5 mb-1 text-[10px]">
+                                                    अवकहड़ा चक्र
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-x-1 gap-y-0.5 text-[9.5px]">
+                                                    <div><span className="text-gray-500">वर्ण:</span> <strong className="text-gray-800">{kundaliData.avakahada?.varna || 'N/A'}</strong></div>
+                                                    <div><span className="text-gray-500">वश्य:</span> <strong className="text-gray-800">{kundaliData.avakahada?.vashya || 'N/A'}</strong></div>
+                                                    <div><span className="text-gray-500">योनि:</span> <strong className="text-gray-800">{kundaliData.avakahada?.yoni || 'N/A'}</strong></div>
+                                                    <div><span className="text-gray-500">गण:</span> <strong className="text-gray-800">{kundaliData.avakahada?.gana || 'N/A'}</strong></div>
+                                                    <div><span className="text-gray-500">नाड़ी:</span> <strong className="text-gray-800">{kundaliData.avakahada?.nadi || 'N/A'}</strong></div>
+                                                    <div><span className="text-gray-500">पाया:</span> <strong className="text-gray-800">{kundaliData.avakahada?.paya || 'Silver'}</strong></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Full 10-Row Planetary Positions & Dignities Table */}
+                                    <div className="overflow-hidden rounded-xl border border-amber-300 bg-white shadow-xs">
+                                        <div className="bg-[#FEF3C7] px-2 py-1 border-b border-amber-300 flex justify-between items-center text-[10px]">
+                                            <span className="font-bold text-[#78350F]">॥ समस्त नवग्रह स्पष्ट स्थिति, दीप्ति एवं अवस्था सारणी ॥</span>
+                                            <span className="text-amber-800 font-mono text-[9px]">Chitrapaksha Lahiri Ayanamsha</span>
+                                        </div>
+                                        <table className="w-full text-[9px] text-left">
+                                            <thead className="bg-[#FFF8E7] text-[#78350F] font-bold border-b border-amber-200">
                                                 <tr>
-                                                    <th className="p-1">{t.mahadasha}</th>
-                                                    <th className="p-1">{t.startDate}</th>
-                                                    <th className="p-1">{t.endDate}</th>
+                                                    <th className="px-1.5 py-1">ग्रह</th>
+                                                    <th className="px-1 py-1">राशि</th>
+                                                    <th className="px-1 py-1">अंश (DMS)</th>
+                                                    <th className="px-1 py-1">भाव</th>
+                                                    <th className="px-1 py-1">नक्षत्र व चरण</th>
+                                                    <th className="px-1 py-1">नवमांश</th>
+                                                    <th className="px-1 py-1">दीप्ति / स्थिति</th>
+                                                    <th className="px-1 py-1">बाल आदि अवस्था</th>
+                                                    <th className="px-1 py-1">गति</th>
+                                                    <th className="px-1.5 py-1">अस्त / उदित</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                {kundaliData.dashas.periods?.slice(0, 6).map((d, i) => (
-                                                    <tr key={i} className="border-t border-amber-100">
-                                                        <td className="p-1 font-semibold">{isHi ? d.hindi : d.lord}</td>
-                                                        <td className="p-1 font-mono">{d.startDate}</td>
-                                                        <td className="p-1 font-mono">{d.endDate}</td>
+                                            <tbody className="divide-y divide-amber-100">
+                                                {/* Lagna Row */}
+                                                <tr className="bg-red-50/40 font-semibold">
+                                                    <td className="px-1.5 py-0.5 font-bold text-[#991B1B]">लग्न (Asc)</td>
+                                                    <td className="px-1 py-0.5 font-semibold text-gray-800">{isHi ? kundaliData.lagna?.signHi : kundaliData.lagna?.sign}</td>
+                                                    <td className="px-1 py-0.5 font-mono text-gray-900">{kundaliData.lagna?.dms || `${kundaliData.lagna?.degree?.toFixed(2)}°`}</td>
+                                                    <td className="px-1 py-0.5 font-bold text-[#991B1B]">1</td>
+                                                    <td className="px-1 py-0.5 text-gray-600">-</td>
+                                                    <td className="px-1 py-0.5 text-gray-700">{isHi ? kundaliData.navamsha?.navamshaLagna?.signHi : kundaliData.navamsha?.navamshaLagna?.sign}</td>
+                                                    <td className="px-1 py-0.5 text-gray-600">लग्नेश: {kundaliData.lagna?.lord}</td>
+                                                    <td className="px-1 py-0.5 text-gray-600">-</td>
+                                                    <td className="px-1 py-0.5 text-emerald-700">मार्गी</td>
+                                                    <td className="px-1.5 py-0.5 text-emerald-700">उदित</td>
+                                                </tr>
+                                                {kundaliData.planets?.map((p) => (
+                                                    <tr key={p.name} className="hover:bg-amber-50/40">
+                                                        <td className="px-1.5 py-0.5 font-bold text-gray-900">
+                                                            {isHi ? `${p.hindi} (${p.abbrHi})` : `${p.name} (${p.abbrEn})`}
+                                                            {p.isRetrograde && <span className="text-red-600 ml-0.5 font-black">(व)</span>}
+                                                        </td>
+                                                        <td className="px-1 py-0.5 text-gray-700">{isHi ? p.signHi || p.sign : p.sign}</td>
+                                                        <td className="px-1 py-0.5 font-mono text-gray-900">{p.dms || `${p.degree?.toFixed(2)}°`}</td>
+                                                        <td className="px-1 py-0.5 font-bold text-[#78350F]">{p.house}</td>
+                                                        <td className="px-1 py-0.5 text-gray-700">{isHi ? p.nakshatraHi || p.nakshatra : p.nakshatra} ({p.pada})</td>
+                                                        <td className="px-1 py-0.5 text-gray-700">{isHi ? p.navamshaSignHi || p.navamshaSign : p.navamshaSign}</td>
+                                                        <td className="px-1 py-0.5">
+                                                            <span className={`font-semibold ${
+                                                                (p.dignityEn || '').includes('Exalted') ? 'text-amber-700 font-bold' :
+                                                                (p.dignityEn || '').includes('Debilitated') ? 'text-red-600 font-bold' :
+                                                                (p.dignityEn || '').includes('Own') ? 'text-emerald-700 font-bold' :
+                                                                'text-gray-600'
+                                                            }`}>
+                                                                {isHi ? p.dignity || 'सम' : p.dignityEn || 'Neutral'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-1 py-0.5 text-gray-700">{isHi ? p.avastha || 'युवा' : p.avasthaEn || 'Adult'}</td>
+                                                        <td className="px-1 py-0.5">
+                                                            {p.isRetrograde ? <span className="text-orange-700 font-bold">वक्री</span> : <span className="text-emerald-700">मार्गी</span>}
+                                                        </td>
+                                                        <td className="px-1.5 py-0.5">
+                                                            {p.isCombust ? <span className="text-red-600 font-bold">अस्त</span> : <span className="text-emerald-700">उदित</span>}
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
                                     </div>
-                                )}
+                                </div>
 
-                                <div className="text-center pt-3 mt-3 border-t-2 border-[#B91C1C]/25 text-xs text-[#78350F]">
-                                    <div className="font-bold text-sm tracking-wider">॥ शुभं भवतु • कल्याणमस्तु ॥</div>
-                                    {userSettings.astrologerName && (
-                                        <div className="mt-1 text-gray-800 font-semibold text-[11px]">
-                                            {userSettings.astrologerName}
+                                {/* Page 1 Footer */}
+                                <div className="mt-2 pt-1 border-t border-amber-300/80 flex justify-between items-center text-[10px] text-gray-600">
+                                    <span>जातक: <strong className="text-gray-900">{kundaliData.name}</strong> • मुख्य जन्म पत्रिका व पंचांग</span>
+                                    <span className="font-bold text-[#991B1B]">॥ पृष्ठ १/४ ॥</span>
+                                    <span className="font-semibold text-amber-900">वैदिक ज्योतिष संस्थान</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ===================================================================== */}
+                        {/* PAGE 2: द्वादश भाव विस्तृत फलादेश एवं सर्वाष्टकवर्ग चक्र               */}
+                        {/* ===================================================================== */}
+                        <div
+                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] overflow-hidden ${getBorderStyleClass()}`}
+                            style={{
+                                width: '794px',
+                                minHeight: '1123px',
+                                maxHeight: '1123px',
+                                height: '1123px',
+                                boxSizing: 'border-box',
+                                padding: '20px 24px',
+                                fontFamily: '"Outfit", "Noto Serif Devanagari", Georgia, serif',
+                                backgroundColor: '#FFFDF5',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between'
+                            }}
+                        >
+                            {renderWatermarkForSheet()}
+                            <div className="relative z-10 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="text-center border-b-2 border-[#991B1B]/30 pb-2 mb-2">
+                                        <div className="text-lg font-extrabold text-[#78350F] uppercase tracking-wider">
+                                            ॥ द्वादश भाव विस्तृत फलादेश एवं सर्वाष्टकवर्ग चक्र ॥
+                                        </div>
+                                        <div className="text-[10px] text-amber-900/80 font-medium">
+                                            (12 Houses Deep Bhava Analysis, Lord Placements, Occupants & Sarvashtakavarga 337 SAV)
+                                        </div>
+                                    </div>
+
+                                    {/* 12 Bhavaphala Grid (2 Columns of 6 Cards) */}
+                                    {kundaliData.bhavaphala && (
+                                        <div className="grid grid-cols-2 gap-2 mb-2">
+                                            {kundaliData.bhavaphala.map((b) => (
+                                                <div key={b.houseNum} className="p-2 bg-white/95 rounded-xl border border-amber-200/90 shadow-xs text-[10px] space-y-1">
+                                                    <div className="flex justify-between items-center border-b border-amber-100 pb-0.5">
+                                                        <span className="font-bold text-[#991B1B] text-[11px]">
+                                                            {isHi ? b.nameHi : b.nameEn}
+                                                        </span>
+                                                        <span className="px-1.5 py-0.2 rounded bg-amber-100 text-[#78350F] font-bold text-[9px]">
+                                                            {isHi ? b.signHi : b.sign} (स्वामी: {b.lord})
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-gray-700 leading-snug space-y-0.5 text-[9.5px]">
+                                                        <div><span className="text-gray-500 font-semibold">भावेश स्थिति:</span> <strong className="text-gray-900">{isHi ? b.lordPlacement : b.lordPlacementEn}</strong></div>
+                                                        <div>
+                                                            <span className="text-gray-500 font-semibold">स्थित ग्रह:</span>{' '}
+                                                            {b.occupants && b.occupants.length > 0 ? (
+                                                                <strong className="text-gray-900">{b.occupants.map(o => (isHi ? `${o.hindi} (${o.dignity})` : `${o.name} (${o.dignity})`)).join(', ')}</strong>
+                                                            ) : (
+                                                                <span className="text-gray-400">कोई ग्रह नहीं (शुभ दृष्टि)</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-[9px] text-amber-950/80 italic pt-0.5 border-t border-amber-100/50">
+                                                            कारकत्व: {isHi ? b.sigHi : b.sigEn}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Sarvashtakavarga 337 SAV Grid */}
+                                    {kundaliData.ashtakvarga && (
+                                        <div className="p-2 bg-white/95 rounded-xl border border-amber-300 shadow-xs space-y-1.5">
+                                            <div className="flex justify-between items-center border-b border-amber-200 pb-1">
+                                                <span className="font-bold text-[#78350F] text-xs">
+                                                    ॥ महर्षि पराशर प्रणीत सर्वाष्टकवर्ग चक्र ॥
+                                                </span>
+                                                <span className="text-[10px] font-bold text-[#991B1B] bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                                                    कुल बिंदु: {kundaliData.ashtakvarga.totalPoints || 337}
+                                                </span>
+                                            </div>
+
+                                            <div className="grid grid-cols-6 gap-1.5 text-center text-[9.5px]">
+                                                {kundaliData.ashtakvarga.houses?.map((h) => (
+                                                    <div
+                                                        key={h.house}
+                                                        className={`p-1 rounded-lg border ${
+                                                            h.points >= 30 ? 'bg-emerald-50 border-emerald-300 text-emerald-900' :
+                                                            h.points >= 26 ? 'bg-amber-50 border-amber-300 text-amber-900' :
+                                                            'bg-red-50 border-red-300 text-red-900'
+                                                        }`}
+                                                    >
+                                                        <div className="font-bold text-gray-700 text-[9px]">भाव {h.house} ({isHi ? h.signHi : h.sign})</div>
+                                                        <div className="text-base font-black my-0.5">{h.points}</div>
+                                                        <div className="text-[8.5px] font-semibold opacity-90">{h.rating}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="text-[9px] text-gray-600 bg-amber-50/50 p-1 rounded border border-amber-100 leading-tight">
+                                                <strong>शास्त्रोक्त नियम:</strong> सर्वाष्टकवर्ग में २८ या अधिक बिंदु वाले भाव जीवन में विशेष सुख, उन्नति व सफलता प्रदान करते हैं। ३०+ बिंदु अत्यंत शुभ होते हैं, जबकि २५ से कम बिंदु वाले भावों में सावधानी व संबंधित वैदिक उपाय अनुशंसित हैं।
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="mt-3 pt-1 border-t border-amber-200/80 flex justify-between items-center text-[10px] text-gray-500">
-                                    <span>{kundaliData.name} • Dasha & Dosha</span>
-                                    <span className="font-bold text-[#B91C1C]">{isHi ? '॥ पृष्ठ ३/३ ॥' : 'Page 3 of 3'}</span>
-                                    <span>Astrolite</span>
+                                {/* Page 2 Footer */}
+                                <div className="mt-2 pt-1 border-t border-amber-300/80 flex justify-between items-center text-[10px] text-gray-600">
+                                    <span>जातक: <strong className="text-gray-900">{kundaliData.name}</strong> • द्वादश भाव विस्तृत फलादेश</span>
+                                    <span className="font-bold text-[#991B1B]">॥ पृष्ठ २/४ ॥</span>
+                                    <span className="font-semibold text-amber-900">वैदिक ज्योतिष संस्थान</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ===================================================================== */}
+                        {/* PAGE 3: विंशोत्तरी महादशा चक्र एवं सम्पूर्ण जीवन फलादेश               */}
+                        {/* ===================================================================== */}
+                        <div
+                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] overflow-hidden ${getBorderStyleClass()}`}
+                            style={{
+                                width: '794px',
+                                minHeight: '1123px',
+                                maxHeight: '1123px',
+                                height: '1123px',
+                                boxSizing: 'border-box',
+                                padding: '20px 24px',
+                                fontFamily: '"Outfit", "Noto Serif Devanagari", Georgia, serif',
+                                backgroundColor: '#FFFDF5',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between'
+                            }}
+                        >
+                            {renderWatermarkForSheet()}
+                            <div className="relative z-10 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="text-center border-b-2 border-[#991B1B]/30 pb-2 mb-2">
+                                        <div className="text-lg font-extrabold text-[#78350F] uppercase tracking-wider">
+                                            ॥ विंशोत्तरी महादशा चक्र (१२० वर्ष) एवं सम्पूर्ण जीवन फलादेश ॥
+                                        </div>
+                                        <div className="text-[10px] text-amber-900/80 font-medium">
+                                            (Complete 120-Year Vimshottari Dasha Sequence & In-Depth Astrological Predictions)
+                                        </div>
+                                    </div>
+
+                                    {/* Dasha Balance Banner */}
+                                    {kundaliData.dashas && (
+                                        <div className="bg-[#FEF3C7] border border-[#F59E0B]/50 px-3 py-1.5 rounded-xl text-center text-[11px] font-semibold text-[#78350F] mb-2 shadow-2xs flex items-center justify-between">
+                                            <span>जन्म कालीन नक्षत्र अनुसार दशा भुक्त शेष:</span>
+                                            <strong className="text-[#991B1B] text-xs font-bold">{kundaliData.dashas.birthBalance}</strong>
+                                        </div>
+                                    )}
+
+                                    {/* Full 9-Dasha Table (120 Years Sequence) */}
+                                    {kundaliData.dashas && (
+                                        <div className="overflow-hidden rounded-xl border border-amber-300 bg-white mb-3 shadow-xs">
+                                            <div className="bg-[#FEF3C7] px-2.5 py-1 border-b border-amber-300 font-bold text-[#78350F] text-[10px] flex justify-between">
+                                                <span>सम्पूर्ण विंशोत्तरी महादशा सारणी (120 वर्ष चक्र)</span>
+                                                <span className="text-[9px] font-normal text-amber-900">क्रम: केतु, शुक्र, सूर्य, चन्द्र, मंगल, राहु, गुरु, शनि, बुध</span>
+                                            </div>
+                                            <table className="w-full text-[9.5px] text-left">
+                                                <thead className="bg-[#FFF8E7] text-[#78350F] font-bold border-b border-amber-200">
+                                                    <tr>
+                                                        <th className="px-2.5 py-1">महादशा स्वामी</th>
+                                                        <th className="px-2 py-1">कुल अवधि</th>
+                                                        <th className="px-2 py-1">प्रारम्भ तिथि</th>
+                                                        <th className="px-2 py-1">समाप्ति तिथि</th>
+                                                        <th className="px-2.5 py-1">दशा स्थिति</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-amber-100">
+                                                    {kundaliData.dashas.periods?.map((d, i) => (
+                                                        <tr key={i} className={i === 0 ? 'bg-amber-100/60 font-bold text-amber-950' : 'hover:bg-amber-50/40'}>
+                                                            <td className="px-2.5 py-0.5 text-gray-900 font-semibold">
+                                                                {isHi ? `${d.hindi} महादशा` : `${d.lord} Mahadasha`}
+                                                            </td>
+                                                            <td className="px-2 py-0.5 text-gray-700">{d.years} वर्ष</td>
+                                                            <td className="px-2 py-0.5 font-mono text-gray-600">{d.startDate}</td>
+                                                            <td className="px-2 py-0.5 font-mono text-gray-900 font-semibold">{d.endDate}</td>
+                                                            <td className="px-2.5 py-0.5">
+                                                                {i === 0 ? (
+                                                                    <span className="px-1.5 py-0.2 rounded bg-[#991B1B] text-white text-[8.5px] font-bold">जन्म कालीन दशा</span>
+                                                                ) : (
+                                                                    <span className="text-gray-500 text-[8.5px]">आगामी महादशा</span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+
+                                    {/* 6 In-Depth Life Predictions (2 Columns of 3 Cards) */}
+                                    {kundaliData.horoscope && (
+                                        <div className="space-y-1.5">
+                                            <div className="text-[11px] font-bold text-[#78350F] border-b border-amber-200 pb-0.5">
+                                                ॥ षड्विध शास्त्रीय जीवन फलादेश (Comprehensive Life Predictions) ॥
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 text-[9.5px]">
+                                                {/* 1. Personality */}
+                                                <div className="p-2 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                                                    <div className="font-bold text-[#991B1B] text-[10px] border-b border-amber-100 pb-0.5">
+                                                        १. स्वभाव, शारीरिक लक्षण एवं व्यक्तित्व
+                                                    </div>
+                                                    <p className="text-gray-700 leading-relaxed">
+                                                        {kundaliData.horoscope.personality?.[isHi ? 'hi' : 'en']}
+                                                    </p>
+                                                </div>
+
+                                                {/* 2. Mind & Emotion */}
+                                                <div className="p-2 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                                                    <div className="font-bold text-[#991B1B] text-[10px] border-b border-amber-100 pb-0.5">
+                                                        २. मानसिक स्थिति, विचार एवं कल्पनाशक्ति
+                                                    </div>
+                                                    <p className="text-gray-700 leading-relaxed">
+                                                        {kundaliData.horoscope.mindEmotion?.[isHi ? 'hi' : 'en']}
+                                                    </p>
+                                                </div>
+
+                                                {/* 3. Wealth */}
+                                                <div className="p-2 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                                                    <div className="font-bold text-[#991B1B] text-[10px] border-b border-amber-100 pb-0.5">
+                                                        ३. धन, कुटुंब, वाणी एवं स्थायी संपत्ति
+                                                    </div>
+                                                    <p className="text-gray-700 leading-relaxed">
+                                                        {kundaliData.horoscope.wealth?.[isHi ? 'hi' : 'en']}
+                                                    </p>
+                                                </div>
+
+                                                {/* 4. Career */}
+                                                <div className="p-2 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                                                    <div className="font-bold text-[#991B1B] text-[10px] border-b border-amber-100 pb-0.5">
+                                                        ४. आजीविका, व्यवसाय, पद-प्रतिष्ठा एवं कर्मक्षेत्र
+                                                    </div>
+                                                    <p className="text-gray-700 leading-relaxed">
+                                                        {kundaliData.horoscope.career?.[isHi ? 'hi' : 'en']}
+                                                    </p>
+                                                </div>
+
+                                                {/* 5. Marriage */}
+                                                <div className="p-2 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                                                    <div className="font-bold text-[#991B1B] text-[10px] border-b border-amber-100 pb-0.5">
+                                                        ५. वैवाहिक सुख, जीवनसाथी एवं पारिवारिक सम्बंध
+                                                    </div>
+                                                    <p className="text-gray-700 leading-relaxed">
+                                                        {kundaliData.horoscope.marriage?.[isHi ? 'hi' : 'en']}
+                                                    </p>
+                                                </div>
+
+                                                {/* 6. Health */}
+                                                <div className="p-2 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                                                    <div className="font-bold text-[#991B1B] text-[10px] border-b border-amber-100 pb-0.5">
+                                                        ६. स्वास्थ्य, रोग प्रतिरोधकता एवं जीवन ऊर्जा
+                                                    </div>
+                                                    <p className="text-gray-700 leading-relaxed">
+                                                        {kundaliData.horoscope.health?.[isHi ? 'hi' : 'en']}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Page 3 Footer */}
+                                <div className="mt-2 pt-1 border-t border-amber-300/80 flex justify-between items-center text-[10px] text-gray-600">
+                                    <span>जातक: <strong className="text-gray-900">{kundaliData.name}</strong> • विंशोत्तरी महादशा एवं सम्पूर्ण जीवन फलादेश</span>
+                                    <span className="font-bold text-[#991B1B]">॥ पृष्ठ ३/४ ॥</span>
+                                    <span className="font-semibold text-amber-900">वैदिक ज्योतिष संस्थान</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ===================================================================== */}
+                        {/* PAGE 4: दोष विश्लेषण, वैदिक उपाय, रत्न परामर्श एवं ज्योतिषी प्रमाणन */}
+                        {/* ===================================================================== */}
+                        <div
+                            className={`patrika-sheet relative bg-[#FFFDF5] text-[#1F2937] overflow-hidden ${getBorderStyleClass()}`}
+                            style={{
+                                width: '794px',
+                                minHeight: '1123px',
+                                maxHeight: '1123px',
+                                height: '1123px',
+                                boxSizing: 'border-box',
+                                padding: '20px 24px',
+                                fontFamily: '"Outfit", "Noto Serif Devanagari", Georgia, serif',
+                                backgroundColor: '#FFFDF5',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between'
+                            }}
+                        >
+                            {renderWatermarkForSheet()}
+                            <div className="relative z-10 flex flex-col justify-between h-full">
+                                <div>
+                                    <div className="text-center border-b-2 border-[#991B1B]/30 pb-2 mb-2">
+                                        <div className="text-lg font-extrabold text-[#78350F] uppercase tracking-wider">
+                                            ॥ कुण्डली दोष विश्लेषण, वैदिक शांति उपाय, रत्न परामर्श एवं ज्योतिषी प्रमाणन ॥
+                                        </div>
+                                        <div className="text-[10px] text-amber-900/80 font-medium">
+                                            (Authentic Dosha Parikshan, Vedic Shanti Mantras, Gemstones & Astrologer Certification)
+                                        </div>
+                                    </div>
+
+                                    {/* Tri-Dosha Analysis */}
+                                    <div className="grid grid-cols-3 gap-2 mb-2">
+                                        {/* Manglik */}
+                                        <div className={`p-2 rounded-xl border text-[9.5px] space-y-1 ${
+                                            kundaliData.dosha?.manglik ? 'bg-red-50/70 border-red-300' : 'bg-emerald-50/70 border-emerald-300'
+                                        }`}>
+                                            <div className="flex justify-between items-center border-b border-gray-200 pb-0.5">
+                                                <span className="font-bold text-gray-900 text-[10px]">{t.manglikDosha}</span>
+                                                <span className={`px-1.5 py-0.2 rounded font-bold text-[8.5px] ${
+                                                    kundaliData.dosha?.manglik ? 'bg-red-200 text-red-900' : 'bg-emerald-200 text-emerald-900'
+                                                }`}>
+                                                    {kundaliData.dosha?.manglik ? 'उपस्थित' : 'दोष मुक्त'}
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-700 leading-snug">
+                                                {kundaliData.dosha?.manglikStatus || 'लग्न व चन्द्र भावों से मंगल अनुकूल है।'}
+                                            </p>
+                                        </div>
+
+                                        {/* Kaal Sarp */}
+                                        <div className={`p-2 rounded-xl border text-[9.5px] space-y-1 ${
+                                            kundaliData.dosha?.kaalSarp ? 'bg-red-50/70 border-red-300' : 'bg-emerald-50/70 border-emerald-300'
+                                        }`}>
+                                            <div className="flex justify-between items-center border-b border-gray-200 pb-0.5">
+                                                <span className="font-bold text-gray-900 text-[10px]">{t.kaalSarpDosha}</span>
+                                                <span className={`px-1.5 py-0.2 rounded font-bold text-[8.5px] ${
+                                                    kundaliData.dosha?.kaalSarp ? 'bg-red-200 text-red-900' : 'bg-emerald-200 text-emerald-900'
+                                                }`}>
+                                                    {kundaliData.dosha?.kaalSarp ? 'उपस्थित' : 'दोष मुक्त'}
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-700 leading-snug">
+                                                {kundaliData.dosha?.kaalSarpType || 'राहु-केतु अक्ष के दोनों ओर ग्रह स्वतंत्र हैं।'}
+                                            </p>
+                                        </div>
+
+                                        {/* Sade Sati */}
+                                        <div className={`p-2 rounded-xl border text-[9.5px] space-y-1 ${
+                                            kundaliData.sadeSati?.isUnderSadeSati ? 'bg-amber-50/70 border-amber-300' : 'bg-emerald-50/70 border-emerald-300'
+                                        }`}>
+                                            <div className="flex justify-between items-center border-b border-gray-200 pb-0.5">
+                                                <span className="font-bold text-gray-900 text-[10px]">{t.sadeSatiTitle}</span>
+                                                <span className={`px-1.5 py-0.2 rounded font-bold text-[8.5px] ${
+                                                    kundaliData.sadeSati?.isUnderSadeSati ? 'bg-amber-200 text-amber-900' : 'bg-emerald-200 text-emerald-900'
+                                                }`}>
+                                                    {kundaliData.sadeSati?.isUnderSadeSati ? 'प्रभावाधीन' : 'प्रभाव मुक्त'}
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-700 leading-snug">
+                                                {kundaliData.sadeSati?.status || 'वर्तमान में शनि का गोचर अनुकूल व फलदायी है।'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Authentic Vedic Shanti Remedies */}
+                                    <div className="p-2 bg-white rounded-xl border border-amber-300 shadow-2xs mb-2 text-[9.5px] space-y-1">
+                                        <div className="font-bold text-[#78350F] text-[10px] border-b border-amber-200 pb-0.5 flex justify-between">
+                                            <span>॥ शास्त्रोक्त वैदिक शांति उपाय एवं सिद्ध मंत्र ॥</span>
+                                            <span className="text-amber-800 text-[9px]">नित्य साधना व देवोपासना</span>
+                                        </div>
+                                        <div className="space-y-1 text-gray-700 leading-relaxed">
+                                            {kundaliData.dosha?.remedies && kundaliData.dosha.remedies.length > 0 ? (
+                                                kundaliData.dosha.remedies.map((rem, idx) => (
+                                                    <div key={idx} className="flex items-start gap-1">
+                                                        <span className="text-[#991B1B] font-bold">•</span>
+                                                        <span>{rem}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="flex items-start gap-1">
+                                                    <span className="text-[#991B1B] font-bold">•</span>
+                                                    <span>प्रतिदिन सूर्योदय के समय तांबे के पात्र से भगवान सूर्य को कुमकुम मिश्रित जल अर्पित करें एवं गायत्री मंत्र का नित्य १०८ बार जप करें।</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Gemstones & Auspicious Factors */}
+                                    <div className="grid grid-cols-2 gap-2 mb-2 text-[9.5px]">
+                                        {/* Gemstones */}
+                                        {kundaliData.horoscope?.gemstones && (
+                                            <div className="p-2 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                                                <div className="font-bold text-[#991B1B] text-[10px] border-b border-amber-100 pb-0.5">
+                                                    ॥ शुभ रत्न परामर्श (Gemstone Advice) ॥
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                    <div><span className="text-gray-500 font-semibold">{t.lifeStone}:</span> <strong className="text-gray-900">{kundaliData.horoscope.gemstones.life}</strong></div>
+                                                    <div><span className="text-gray-500 font-semibold">{t.luckyStone}:</span> <strong className="text-gray-900">{kundaliData.horoscope.gemstones.lucky}</strong></div>
+                                                    <div><span className="text-gray-500 font-semibold">{t.beneficStone}:</span> <strong className="text-gray-900">{kundaliData.horoscope.gemstones.benefic}</strong></div>
+                                                    <div className="text-[8.5px] text-amber-900/80 italic pt-0.5 border-t border-amber-100">
+                                                        नोट: रत्न सदैव योग्य ज्योतिषी के मार्गदर्शन उपरांत शुभ मुहूर्त में प्राण-प्रतिष्ठा करवाकर धारण करें।
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Lucky Factors */}
+                                        {kundaliData.horoscope?.luckyFactors && (
+                                            <div className="p-2 bg-white rounded-xl border border-amber-200 shadow-2xs space-y-1">
+                                                <div className="font-bold text-[#991B1B] text-[10px] border-b border-amber-100 pb-0.5">
+                                                    ॥ शुभ कारक एवं अनुकूलता (Lucky Factors) ॥
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-x-1 gap-y-0.5">
+                                                    <div><span className="text-gray-500 font-semibold">शुभ अंक:</span> <strong className="text-gray-900">{kundaliData.horoscope.luckyFactors.numbers}</strong></div>
+                                                    <div><span className="text-gray-500 font-semibold">शुभ दिशा:</span> <strong className="text-gray-900">{kundaliData.horoscope.luckyFactors.direction}</strong></div>
+                                                    <div className="col-span-2"><span className="text-gray-500 font-semibold">शुभ रंग:</span> <strong className="text-gray-900">{kundaliData.horoscope.luckyFactors.colors}</strong></div>
+                                                    <div className="col-span-2"><span className="text-gray-500 font-semibold">शुभ वार:</span> <strong className="text-gray-900">{kundaliData.horoscope.luckyFactors.days}</strong></div>
+                                                    <div className="col-span-2"><span className="text-gray-500 font-semibold">इष्ट देव:</span> <strong className="text-[#991B1B]">{kundaliData.horoscope.luckyFactors.ishta}</strong></div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Pandit Astrologer Certification & Official Seal Box */}
+                                    <div className="p-2.5 bg-gradient-to-br from-amber-50/90 via-[#FFFDF5] to-orange-50/90 rounded-2xl border-2 border-[#991B1B]/40 shadow-xs space-y-1.5 text-center">
+                                        <div className="text-[11px] font-bold text-[#991B1B] tracking-wider">
+                                            ॥ ॐ स्वस्ति न इन्द्रो वृद्धश्रवाः स्वस्ति नः पूषा विश्ववेदाः। स्वस्ति नस्तार्क्ष्यो अरिष्टनेमिः स्वस्ति नो बृहस्पतिर्दधातु ॥
+                                        </div>
+                                        <div className="text-[10px] font-black text-[#78350F] tracking-widest uppercase">
+                                            ॥ शुभं भवतु • कल्याणमस्तु • सर्व कार्येषु सिद्धिर्भवतु ॥
+                                        </div>
+                                        <p className="text-[9px] text-gray-700 max-w-xl mx-auto leading-relaxed border-t border-amber-200/80 pt-1">
+                                            प्रमाणित किया जाता है कि यह जन्म पत्रिका महर्षि पराशर प्रणीत <strong>'बृहत्पाराशर होराशास्त्र'</strong> के शास्त्रीय सूत्रों एवं शुद्ध दृक्-पक्षीय <strong>लहरी अयनांश (Lahiri Chitrapaksha Ayanamsha)</strong> खगोलीय गणनाओं के आधार पर पूर्ण अनुसंधान, निष्ठा एवं सत्यता से निर्मित की गई है।
+                                        </p>
+
+                                        {/* Signature & Seal Block */}
+                                        <div className="pt-2 mt-1 border-t border-amber-200/80 grid grid-cols-3 gap-2 items-end text-left text-[9.5px]">
+                                            <div>
+                                                <div className="text-gray-500 text-[8.5px]">ज्योतिषाचार्य / संस्थान:</div>
+                                                <div className="font-bold text-[#991B1B] text-[11px]">
+                                                    {userSettings.astrologerName || 'पंडित अभिमन्यु वैष्णव'}
+                                                </div>
+                                                <div className="text-gray-600 text-[8.5px]">वैदिक ज्योतिषाचार्य एवं कुण्डली विशेषज्ञ</div>
+                                            </div>
+
+                                            <div className="text-center">
+                                                <div className="inline-block border border-amber-400/80 bg-white/80 px-3 py-1.5 rounded-lg shadow-2xs">
+                                                    <div className="text-[8px] uppercase tracking-widest font-black text-[#991B1B]">अधिकृत वैदिक मुहर</div>
+                                                    <div className="text-xs font-bold text-amber-900 mt-0.5">卐 प्रमाणित 卐</div>
+                                                    <div className="text-[8px] text-gray-500">Astrolite Vedic Certified</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="text-right">
+                                                <div className="text-gray-500 text-[8.5px]">सम्पर्क सूत्र / ईमेल:</div>
+                                                <div className="font-mono text-gray-800 font-semibold text-[9px]">
+                                                    {userSettings.contactNumber || '+91 98765 43210'}
+                                                </div>
+                                                <div className="font-mono text-gray-600 text-[8.5px]">
+                                                    {userSettings.email || 'abhimanyuvaishnav2017@gmail.com'}
+                                                </div>
+                                                <div className="text-gray-500 text-[8px] mt-0.5">
+                                                    दिनांक: {new Date().toLocaleDateString(isHi ? 'hi-IN' : 'en-US')}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Page 4 Footer */}
+                                <div className="mt-2 pt-1 border-t border-amber-300/80 flex justify-between items-center text-[10px] text-gray-600">
+                                    <span>जातक: <strong className="text-gray-900">{kundaliData.name}</strong> • दोष विश्लेषण, वैदिक उपाय व प्रमाणन</span>
+                                    <span className="font-bold text-[#991B1B]">॥ पृष्ठ ४/४ ॥</span>
+                                    <span className="font-semibold text-amber-900">वैदिक ज्योतिष संस्थान</span>
                                 </div>
                             </div>
                         </div>

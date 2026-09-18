@@ -99,7 +99,7 @@ body {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm 8mm 8mm 8mm;
+    margin: 0;
   }
 
   html, body {
@@ -113,37 +113,24 @@ body {
     print-color-adjust: exact !important;
   }
 
-  .print\:hidden {
+  /* Hide screen UI elements on print */
+  nav, footer, .print\:hidden, button {
     display: none !important;
   }
 
-  /* Reset all screen-specific wrappers on print */
-  .container,
-  main,
-  #root,
-  .max-w-7xl,
-  .grid,
-  .lg\:col-span-8,
-  .lg\:col-span-12 {
-    max-width: 100% !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+  /* Display only the printable container */
+  .patrika-print-root {
     display: block !important;
-    float: none !important;
-  }
-
-  /* Printable Patrika Container specific styling */
-  .patrika-container {
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    position: static !important;
+    transform: none !important;
     width: 100% !important;
     max-width: 100% !important;
-    border: none !important;
-    background: transparent !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    background: #FFFDF5 !important;
   }
 
   /* Individual Distinct Printed Page */
@@ -152,12 +139,15 @@ body {
     break-after: page !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    margin: 0 !important;
-    padding: 8mm 8mm !important;
+    margin: 0 auto !important;
+    padding: 8mm 10mm !important;
     box-sizing: border-box !important;
-    width: 100% !important;
-    min-height: 275mm !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
     position: relative !important;
+    overflow: hidden !important;
     background-color: #FFFDF5 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -168,18 +158,8 @@ body {
     break-after: auto !important;
   }
 
-  .print-page-break {
-    page-break-after: always !important;
-    break-after: page !important;
-  }
-
-  .print-avoid-break {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
   /* Table and text printing fidelity */
-  table, th, td {
+  table, th, td, div, span, p, h1, h2, h3, h4 {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
