@@ -7,6 +7,7 @@ const KundaliChart = ({
     activeChartType = 'D1',
     showControls = true,
     showLegend = true,
+    showTitle = true,
     size = 'normal',
     customTitle = null,
     watermarkType = 'om'
@@ -212,11 +213,13 @@ const KundaliChart = ({
             )}
 
             {/* Title above chart */}
-            <div className="text-center mb-2">
-                <h4 className="font-bold text-sm md:text-base text-primary tracking-wide">
-                    {getChartTitle()}
-                </h4>
-            </div>
+            {showTitle && customTitle !== false && customTitle !== '' && (
+                <div className="text-center mb-2">
+                    <h4 className="font-bold text-sm md:text-base text-primary tracking-wide">
+                        {getChartTitle()}
+                    </h4>
+                </div>
+            )}
 
             {/* Sacred Vedic North Indian Diamond Chart SVG */}
             <div className={`relative w-full ${isCompact ? 'max-w-[260px]' : 'max-w-[360px]'} aspect-square mx-auto drop-shadow-md`}>
@@ -292,16 +295,29 @@ const KundaliChart = ({
 
                                     if (count === 1) {
                                         offsetY = 0;
+                                        offsetX = 0;
                                     } else if (count === 2) {
-                                        offsetY = (pIdx === 0 ? -9 : 9);
+                                        if (houseNum === 1 || houseNum === 7) {
+                                            offsetX = (pIdx === 0 ? -24 : 24);
+                                            offsetY = 0;
+                                        } else {
+                                            offsetX = 0;
+                                            offsetY = (pIdx === 0 ? -11 : 11);
+                                        }
                                     } else if (count === 3) {
-                                        offsetY = (pIdx - 1) * 14;
+                                        if (houseNum === 1 || houseNum === 7) {
+                                            offsetX = (pIdx === 0 ? -26 : pIdx === 1 ? 26 : 0);
+                                            offsetY = (pIdx === 2 ? 14 : -4);
+                                        } else {
+                                            offsetX = 0;
+                                            offsetY = (pIdx - 1) * 15;
+                                        }
                                     } else if (count === 4) {
-                                        offsetX = (pIdx % 2 === 0 ? -16 : 16);
-                                        offsetY = (pIdx < 2 ? -8 : 8);
+                                        offsetX = (pIdx % 2 === 0 ? -22 : 22);
+                                        offsetY = (pIdx < 2 ? -10 : 10);
                                     } else {
-                                        offsetX = (pIdx % 2 === 0 ? -18 : 18);
-                                        offsetY = (Math.floor(pIdx / 2) - 1) * 12;
+                                        offsetX = (pIdx % 2 === 0 ? -24 : 24);
+                                        offsetY = (Math.floor(pIdx / 2) - 1) * 14;
                                     }
 
                                     return (
@@ -322,7 +338,7 @@ const KundaliChart = ({
                                                     planet.name === 'Rahu' || planet.name === 'Ketu' ? 'fill-[#6B21A8]' :
                                                     'fill-[#1F2937]'
                                                 }`}
-                                                style={{ fontSize: count > 3 ? '11px' : '12.5px', fontFamily: 'sans-serif' }}
+                                                style={{ fontSize: count > 3 ? '10px' : count > 1 ? '11px' : '12px', fontFamily: 'sans-serif' }}
                                             >
                                                 {getPlanetLabel(planet)}
                                             </text>
@@ -333,14 +349,14 @@ const KundaliChart = ({
                                 {/* Lagna Indicator in House 1 */}
                                 {houseNum === 1 && (
                                     <text
-                                        x={coords.planetsStart.x}
-                                        y={coords.planetsStart.y - (housePlanets.length > 0 ? 18 : 0)}
+                                        x={200}
+                                        y={52}
                                         textAnchor="middle"
                                         dominantBaseline="central"
-                                        className="font-extrabold fill-[#991B1B]"
-                                        style={{ fontSize: '11px' }}
+                                        className="font-black fill-[#991B1B]"
+                                        style={{ fontSize: '11px', fontFamily: 'serif' }}
                                     >
-                                        {lang === 'hi' ? 'लग्न' : 'Asc'}
+                                        {lang === 'hi' ? '॥ लग्न ॥' : 'Asc'}
                                     </text>
                                 )}
                             </g>

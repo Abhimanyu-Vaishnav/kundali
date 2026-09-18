@@ -336,13 +336,70 @@ const calculateVedicBirthChart = (dob, tob, lat, lon, timezone = 5.5) => {
 
     const namaakshar = moonNak.padas[moon.pada - 1] || 'अ';
 
+    const YONI_MAP = {
+        'Horse': 'अश्व (Horse)',
+        'Elephant': 'गज (Elephant)',
+        'Sheep': 'मेष (Sheep)',
+        'Serpent': 'सर्प (Serpent)',
+        'Dog': 'श्वान (Dog)',
+        'Cat': 'मार्जार (Cat)',
+        'Rat': 'मूषक (Rat)',
+        'Cow': 'गौ (Cow)',
+        'Buffalo': 'महिष (Buffalo)',
+        'Tiger': 'व्याघ्र (Tiger)',
+        'Hare': 'शशक (Hare)',
+        'Monkey': 'वानर (Monkey)',
+        'Mongoose': 'नकुल (Mongoose)',
+        'Lion': 'सिंह (Lion)'
+    };
+
+    const VASHYA_MAP = {
+        'Manava': 'मानव (द्विपद)',
+        'Chatushpada': 'चतुष्पद',
+        'Jalachara': 'जलचर',
+        'Keeta': 'कीट',
+        'Vanachara': 'वनचर'
+    };
+
+    const GANA_MAP = {
+        'Deva': 'देव गण',
+        'Manushya': 'मनुष्य गण',
+        'Rakshasa': 'राक्षस गण'
+    };
+
+    const NADI_MAP = {
+        'Adi': 'आदि नाड़ी',
+        'Madhya': 'मध्य नाड़ी',
+        'Antya': 'अन्त्य नाड़ी'
+    };
+
+    const VARNA_MAP = {
+        'Brahmin': 'ब्राह्मण',
+        'Kshatriya': 'क्षत्रिय',
+        'Vaishya': 'वैश्य',
+        'Shudra': 'शूद्र'
+    };
+
+    const PAYA_MAP = {
+        'Gold (स्वर्ण)': 'सुवर्ण पाया',
+        'Silver (रजत)': 'रजत पाया',
+        'Copper (ताम्र)': 'ताम्र पाया',
+        'Iron (लौह)': 'लौह पाया'
+    };
+
     const avakahada = {
-        varna: moonNak.varna,
-        vashya: moonNak.vashya,
-        yoni: moonNak.yoni,
-        gana: moonNak.gana,
-        nadi: moonNak.nadi,
-        paya,
+        varna: VARNA_MAP[moonNak.varna] || moonNak.varna,
+        varnaEn: moonNak.varna,
+        vashya: VASHYA_MAP[moonNak.vashya] || moonNak.vashya,
+        vashyaEn: moonNak.vashya,
+        yoni: YONI_MAP[moonNak.yoni] || moonNak.yoni,
+        yoniEn: moonNak.yoni,
+        gana: GANA_MAP[moonNak.gana] || moonNak.gana,
+        ganaEn: moonNak.gana,
+        nadi: NADI_MAP[moonNak.nadi] || moonNak.nadi,
+        nadiEn: moonNak.nadi,
+        paya: PAYA_MAP[paya] || paya,
+        payaEn: paya,
         namaakshar,
         moonSign: moonSign.name,
         moonSignHi: moonSign.hindi,
@@ -391,8 +448,8 @@ const calculateVedicBirthChart = (dob, tob, lat, lon, timezone = 5.5) => {
     }
 
     // Sunrise and Sunset calculation via Astronomy Engine
-    let sunriseStr = '06:00 AM';
-    let sunsetStr = '06:30 PM';
+    let sunriseStr = '05:57';
+    let sunsetStr = '18:32';
     try {
         const obs = new Astronomy.Observer(latitude, longitude, 0);
         const dayStart = Astronomy.MakeTime(new Date(Date.UTC(year, month - 1, day, 0, 0, 0)));
@@ -401,11 +458,11 @@ const calculateVedicBirthChart = (dob, tob, lat, lon, timezone = 5.5) => {
 
         if (sr && sr.date) {
             const srLocal = new Date(sr.date.getTime() + tz * 3600000);
-            sunriseStr = srLocal.toISOString().substring(11, 16) + ' IST';
+            sunriseStr = srLocal.toISOString().substring(11, 16);
         }
         if (ss && ss.date) {
             const ssLocal = new Date(ss.date.getTime() + tz * 3600000);
-            sunsetStr = ssLocal.toISOString().substring(11, 16) + ' IST';
+            sunsetStr = ssLocal.toISOString().substring(11, 16);
         }
     } catch (e) {
         // Fallback default times
@@ -838,7 +895,9 @@ const calculateVedicBirthChart = (dob, tob, lat, lon, timezone = 5.5) => {
             sign: signInHouse.name,
             signHi: signInHouse.hindi,
             lord: houseLord,
+            lordPlacementHouse,
             lordPlacement: `${lordPlacementHouse} भाव में`,
+            lordPlacementHi: `${lordPlacementHouse} भाव में स्थित`,
             lordPlacementEn: `In House ${lordPlacementHouse}`,
             occupants: occupants.map(o => ({
                 name: o.name,
